@@ -40,7 +40,6 @@ import cern.c2mon.client.core.listener.TagSubscriptionListener;
 import cern.c2mon.client.core.manager.CoreSupervisionManager;
 import cern.c2mon.client.core.tag.TagController;
 import cern.c2mon.client.core.tag.TagImpl;
-import cern.c2mon.client.core.tag.ClientDataTagImpl;
 import cern.c2mon.shared.client.tag.TagUpdate;
 import cern.c2mon.shared.rule.RuleFormatException;
 
@@ -98,7 +97,7 @@ public class TagServiceImpl implements AdvancedTagService {
     Collection<ClientDataTagValue> clonedDataTags = new ArrayList<>(cacheTagList.size());
 
     for (Tag cdt : cacheTagList) {
-      clonedDataTags.add((ClientDataTagValue) ((ClientDataTagImpl) cdt).clone());
+      clonedDataTags.add(((TagImpl) cdt).clone());
     }
 
     return clonedDataTags;
@@ -110,7 +109,7 @@ public class TagServiceImpl implements AdvancedTagService {
     Collection<Tag> clonedDataTags = new ArrayList<>(cacheTagList.size());
 
     for (Tag cdt : cacheTagList) {
-      clonedDataTags.add(((ClientDataTagImpl) cdt).clone());
+      clonedDataTags.add(((TagImpl) cdt).clone());
     }
 
     return clonedDataTags;
@@ -324,7 +323,7 @@ public class TagServiceImpl implements AdvancedTagService {
 
     for (Entry<Long, Tag> cacheEntry : cachedValues.entrySet()) {
       if (cacheEntry.getValue() != null) {
-        resultList.add(((ClientDataTagImpl) cacheEntry.getValue()).getTagController().getTagImpl().clone());
+        resultList.add(((TagImpl) cacheEntry.getValue()).clone());
       } else {
         missingTags.add(cacheEntry.getKey());
       }
@@ -434,7 +433,7 @@ public class TagServiceImpl implements AdvancedTagService {
 
     for (Entry<String, Tag> cacheEntry : cachedValues.entrySet()) {
       if (cacheEntry.getValue() != null) {
-        resultList.add(((ClientDataTagImpl) cacheEntry.getValue()).clone());
+        resultList.add(((TagImpl) cacheEntry.getValue()).clone());
       } else {
         missingTags.add(cacheEntry.getKey());
       }
