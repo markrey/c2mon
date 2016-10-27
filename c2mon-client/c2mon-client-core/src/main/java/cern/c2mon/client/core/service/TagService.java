@@ -1,4 +1,4 @@
-/******************************************************************************
+/*******************************************************************************
  * Copyright (C) 2010-2016 CERN. All rights not expressly granted are reserved.
  *
  * This file is part of the CERN Control and Monitoring Platform 'C2MON'.
@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with C2MON. If not, see <http://www.gnu.org/licenses/>.
- *****************************************************************************/
-package cern.c2mon.client.core;
+ ******************************************************************************/
+package cern.c2mon.client.core.service;
 
 import java.util.Collection;
 import java.util.Map;

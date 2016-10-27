@@ -1,4 +1,4 @@
-/******************************************************************************
+/*******************************************************************************
  * Copyright (C) 2010-2016 CERN. All rights not expressly granted are reserved.
  *
  * This file is part of the CERN Control and Monitoring Platform 'C2MON'.
@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with C2MON. If not, see <http://www.gnu.org/licenses/>.
- *****************************************************************************/
-package cern.c2mon.client.core.service;
+ ******************************************************************************/
+package cern.c2mon.client.core.service.impl;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -39,6 +39,8 @@ import cern.c2mon.client.core.listener.TagSubscriptionListener;
 import cern.c2mon.client.core.manager.CoreSupervisionManager;
 import cern.c2mon.client.core.tag.TagController;
 import cern.c2mon.client.core.tag.TagImpl;
+import cern.c2mon.client.core.service.AdvancedTagService;
+import cern.c2mon.client.core.jms.RequestHandler;
 import cern.c2mon.shared.client.tag.TagUpdate;
 import cern.c2mon.shared.rule.RuleFormatException;
 
