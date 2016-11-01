@@ -3,14 +3,18 @@ package cern.c2mon.client.core.elasticsearch;
 import cern.c2mon.client.common.tag.Tag;
 import cern.c2mon.client.core.TagService;
 import cern.c2mon.client.core.config.C2monClientProperties;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
+import io.searchbox.client.JestResult;
 import io.searchbox.client.config.HttpClientConfig;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
 import io.searchbox.core.search.aggregation.AvgAggregation;
 import io.searchbox.core.search.aggregation.DateHistogramAggregation.DateHistogram;
 import io.searchbox.core.search.aggregation.TermsAggregation;
+import io.searchbox.indices.mapping.GetMapping;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
@@ -21,10 +25,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.elasticsearch.index.query.QueryBuilders.*;
@@ -231,5 +232,43 @@ public class ElasticsearchService {
         .map(bucket -> Long.valueOf(bucket.getKey())).collect(Collectors.toList()));
 
     return tagService.get(tagIds);
+  }
+
+  /**
+   * Return a set of all metadata keys that have been configured on all tag
+   * indices.
+   *
+   * This is done by inspecting the mappings themselves, since Elasticsearch
+   * updates the mappings when new metadata keys are added.
+   *
+   * @return a set of all distinct metadata keys in use across all mappings
+   */
+  public Set<String> getDistinctMetadataKeys() {
+    Set<String> keys = new HashSet<>();
+
+    JestResult result;
+    GetMapping get = new GetMapping.Builder().addIndex("c2mon-tag*").build();
+
+    try {
+      result = client.execute(get);
+    } catch (IOException e) {
+      throw new RuntimeException("Error getting index mapping", e);
+    }
+
+    for (Map.Entry<String, JsonElement> index : result.getJsonObject().entrySet()) {
+      for (Map.Entry<String, JsonElement> mapping: index.getValue().getAsJsonObject().entrySet()) {
+        for (Map.Entry<String, JsonElement> type: mapping.getValue().getAsJsonObject().entrySet()) {
+          JsonObject metadata = type.getValue().getAsJsonObject()
+              .getAsJsonObject("properties")
+              .getAsJsonObject("metadata")
+              .getAsJsonObject("properties");
+
+          if (metadata == null) continue;
+          keys.addAll(metadata.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+        }
+      }
+    }
+
+    return keys;
   }
 }
