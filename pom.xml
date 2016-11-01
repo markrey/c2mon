@@ -69,7 +69,8 @@
     <org.springframework.version>4.3.4.RELEASE</org.springframework.version>
     <org.springframework.boot.version>1.4.2.RELEASE</org.springframework.boot.version>
     <org.slf4j.version>1.7.5</org.slf4j.version>
-
+    <elasticsearch.version>2.3.3</elasticsearch.version>
+    <io.searchbox.jest.version>2.0.3</io.searchbox.jest.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -315,6 +316,16 @@
         <groupId>xml-apis</groupId>
         <artifactId>xml-apis</artifactId>
         <version>1.4.01</version>
+      </dependency>
+      <dependency>
+        <groupId>org.elasticsearch</groupId>
+        <artifactId>elasticsearch</artifactId>
+        <version>${elasticsearch.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.searchbox</groupId>
+        <artifactId>jest</artifactId>
+        <version>${io.searchbox.jest.version}</version>
       </dependency>
 
 
