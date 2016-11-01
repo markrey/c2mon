@@ -43,4 +43,18 @@ public class C2monClientProperties {
    * JMS properties
    */
   private final ClientJmsProperties jms = new ClientJmsProperties();
+
+  /**
+   * Elasticsearch properties
+   */
+  private Elasticsearch elasticsearch = new Elasticsearch();
+
+  @Data
+  public static class Elasticsearch {
+
+    /**
+     * URL of the Elasticsearch instance
+     */
+    private String url = "http://localhost:9200";
+  }
 }
