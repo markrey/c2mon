@@ -12,6 +12,7 @@ import io.searchbox.client.config.HttpClientConfig;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
 import io.searchbox.core.search.aggregation.AvgAggregation;
+import io.searchbox.core.search.aggregation.DateHistogramAggregation;
 import io.searchbox.core.search.aggregation.DateHistogramAggregation.DateHistogram;
 import io.searchbox.core.search.aggregation.TermsAggregation;
 import io.searchbox.indices.mapping.GetMapping;
@@ -20,6 +21,8 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.joda.time.DateTimeConstants;
+import org.joda.time.Days;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -60,29 +63,33 @@ public class ElasticsearchService {
    * A suitable average aggregation interval is automatically calculated.
    *
    * @param id  the id of the tag
-   * @param min the beginning of the requested date range
-   * @param max the end of the requested date range
-   * @return list of [timestamp, value] pairs
+   * @param min the beginning of the requested date range (ms)
+   * @param max the end of the requested date range (ms)
+   *
+   * @return list of [timestamp (ms), value] pairs
    */
   public List<Object[]> getHistory(Long id, Long min, Long max) {
     List<Object[]> results = new ArrayList<>();
 
     // Figure out the right interval
     String interval = getInterval(min, max);
-    log.info("using interval: " + interval);
+    log.info("Using interval: " + interval);
 
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder.query(termQuery("id", id))
-        .size(1)
-        .aggregation(AggregationBuilders.dateHistogram("events-per-interval")
-            .field("timestamp")
-            .interval(new DateHistogramInterval(interval))
-            .subAggregation(
-                AggregationBuilders.avg("avg-value").field("value")
-            ));
+        .size(0)
+        .aggregation(AggregationBuilders.filter("time-range")
+            .filter(rangeQuery("timestamp").from(min).to(max)).subAggregation(
+                AggregationBuilders.dateHistogram("events-per-interval")
+                    .field("timestamp")
+                    .interval(new DateHistogramInterval(interval))
+                    .subAggregation(
+                        AggregationBuilders.avg("avg-value").field("value")
+                    )));
 
     SearchResult result;
     Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex("c2mon-tag*").build();
+    long start = System.currentTimeMillis();
 
     try {
       result = client.execute(search);
@@ -90,11 +97,13 @@ public class ElasticsearchService {
       throw new RuntimeException("Error querying history for tag #" + id, e);
     }
 
-    for (DateHistogram bucket : result.getAggregations().getDateHistogramAggregation("events-per-interval").getBuckets()) {
+    DateHistogramAggregation aggregation = result.getAggregations().getFilterAggregation("time-range").getDateHistogramAggregation("events-per-interval");
+    for (DateHistogram bucket : aggregation.getBuckets()) {
       AvgAggregation avg = bucket.getAvgAggregation("avg-value");
       results.add(new Object[]{Long.parseLong(bucket.getTimeAsString()), avg.getAvg()});
     }
 
+    log.info("Loaded {} values in {}ms", results.size(), System.currentTimeMillis() - start);
     return results;
   }
 
@@ -134,6 +143,7 @@ public class ElasticsearchService {
    * Get the top {@literal size} most active tags.
    *
    * @param size the number of top tags to retrieve
+   *
    * @return a list of {@link Tag} instances
    */
   public List<Tag> getTopTags(Integer size) {
@@ -164,6 +174,7 @@ public class ElasticsearchService {
    * Find all tags by name with a given prefix.
    *
    * @param query the tag name prefix
+   *
    * @return a list of tags whose names match the given prefix
    */
   public Collection<Tag> findByName(String query) {
@@ -204,6 +215,7 @@ public class ElasticsearchService {
    *
    * @param key   the metadata key
    * @param value the metadata value
+   *
    * @return a list of tags containing the exact metadata requested
    */
   public Collection<Tag> findByMetadata(String key, String value) {
@@ -237,7 +249,7 @@ public class ElasticsearchService {
   /**
    * Return a set of all metadata keys that have been configured on all tag
    * indices.
-   *
+   * <p>
    * This is done by inspecting the mappings themselves, since Elasticsearch
    * updates the mappings when new metadata keys are added.
    *
@@ -256,8 +268,8 @@ public class ElasticsearchService {
     }
 
     for (Map.Entry<String, JsonElement> index : result.getJsonObject().entrySet()) {
-      for (Map.Entry<String, JsonElement> mapping: index.getValue().getAsJsonObject().entrySet()) {
-        for (Map.Entry<String, JsonElement> type: mapping.getValue().getAsJsonObject().entrySet()) {
+      for (Map.Entry<String, JsonElement> mapping : index.getValue().getAsJsonObject().entrySet()) {
+        for (Map.Entry<String, JsonElement> type : mapping.getValue().getAsJsonObject().entrySet()) {
           JsonObject metadata = type.getValue().getAsJsonObject()
               .getAsJsonObject("properties")
               .getAsJsonObject("metadata")
