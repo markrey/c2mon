@@ -112,23 +112,23 @@ public class ElasticsearchService {
     Long range = max - min;
 
     // One minute range loads second data
-    if (range <= 60 * 1000) {
+    if (range <= 60 * 1000L) {
       interval = "1s";
     }
-    // One hour range loads minute data
-    else if (range <= 2 * 3600 * 1000) {
+    // 2 hour range loads minute data
+    else if (range <= 2 * 3600 * 1000L) {
       interval = "1m";
     }
-    // Two day range loads 10 minute data
-    else if (range <= 2 * 24 * 3600 * 1000) {
+    // 2 day range loads 10 minute data
+    else if (range <= 2 * 24 * 3600 * 1000L) {
       interval = "10m";
     }
-    // One month range loads hourly data
-    else if (range <= 31 * 24 * 3600 * 1000) {
+    // 2 month range loads hourly data
+    else if (range <= 2 * 31 * 24 * 3600 * 1000L) {
       interval = "1h";
     }
     // One year range loads daily data
-    else if (range <= 15 * 31 * 24 * 3600 * 1000) {
+    else if (range <= 15 * 31 * 24 * 3600 * 1000L) {
       interval = "1d";
     }
     // Greater range loads weekly data
