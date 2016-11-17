@@ -184,5 +184,4 @@ public class CacheRegistrationServiceImpl implements CacheRegistrationService {
     controlTagCache.registerSynchronousListener(cacheListener);
     ruleTagCache.registerSynchronousListener(cacheListener);
   }
-
 }
