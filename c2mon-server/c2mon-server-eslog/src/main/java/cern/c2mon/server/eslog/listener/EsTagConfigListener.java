@@ -17,15 +17,20 @@
 
 package cern.c2mon.server.eslog.listener;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import cern.c2mon.pmanager.persistence.IPersistenceManager;
-import cern.c2mon.server.cache.C2monCacheListener;
+import cern.c2mon.server.cache.C2monBufferedCacheListener;
 import cern.c2mon.server.common.component.Lifecycle;
 import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.eslog.structure.converter.EsTagConfigConverter;
@@ -37,7 +42,7 @@ import cern.c2mon.server.eslog.structure.types.tag.EsTagConfig;
 @Data
 @Slf4j
 @Service
-public class EsTagConfigListener implements C2monCacheListener<Tag>, SmartLifecycle {
+public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, SmartLifecycle {
 
   private final IPersistenceManager<EsTagConfig> esTagConfigPersistenceManager;
   /**
@@ -57,6 +62,8 @@ public class EsTagConfigListener implements C2monCacheListener<Tag>, SmartLifecy
                              final EsTagConfigConverter configConverter) {
     this.esTagConfigPersistenceManager = esTagConfigPersistenceManager;
     this.configConverter = configConverter;
+
+    log.info("ESTagConfigListener is running");
   }
 
 
@@ -91,13 +98,29 @@ public class EsTagConfigListener implements C2monCacheListener<Tag>, SmartLifecy
   }
 
   @Override
-  public void notifyElementUpdated(Tag cacheable) {
-    esTagConfigPersistenceManager.storeData(configConverter.convert(cacheable));
+  public void notifyElementUpdated(Collection<Tag> collection) {
+    if(collection == null) {
+      log.warn("notifyElementUpdated() = Received a null collection of tags");
+      return;
+    }
+    log.info("notifyElementUpdated() - Received a collection of " + collection.size() + " elements");
 
+    esTagConfigPersistenceManager.storeData(convertTagsToEsTags(collection));
   }
 
   @Override
-  public void confirmStatus(Tag cacheable) {
+  public void confirmStatus(Collection<Tag> eventCollection) {
 
+  }
+
+  private List<EsTagConfig> convertTagsToEsTags(final Collection<Tag> tagsToLog) {
+    final List<EsTagConfig> esTagList = new ArrayList<>();
+    if (CollectionUtils.isEmpty(tagsToLog)) {
+      return esTagList;
+    }
+
+    tagsToLog.forEach(tag -> esTagList.add(configConverter.convert(tag)));
+
+    return esTagList;
   }
 }

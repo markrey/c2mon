@@ -17,9 +17,13 @@
 
 package cern.c2mon.server.eslog.structure.types.tag;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.gson.Gson;
 import lombok.Data;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 import cern.c2mon.pmanager.IFallback;
 import cern.c2mon.pmanager.fallback.exception.DataFallbackException;
@@ -29,24 +33,42 @@ import cern.c2mon.server.eslog.structure.types.GsonSupplier;
  * @author Szymon Halastra
  */
 @Data
+@Slf4j
 public class EsTagConfig implements IFallback {
 
   @NonNull
   protected static final transient Gson gson = GsonSupplier.INSTANCE.get();
 
+  private long id;
+  private String name;
+  private final Map<String, String> metadata = new HashMap<>();
+
   private final EsTagC2monInfo c2mon;
 
   public EsTagConfig() {
+    this.id = -1L;
     this.c2mon = new EsTagC2monInfo("String");
+  }
+
+  public EsTagConfig(Long id, String dataType) {
+    this.id = id;
+    this.c2mon = new EsTagC2monInfo(dataType);
   }
 
   @Override
   public IFallback getObject(String line) throws DataFallbackException {
-    return null;
+    return gson.fromJson(line, EsTagConfig.class);
   }
 
   @Override
   public String getId() {
-    return null;
+    return String.valueOf(id);
+  }
+
+  @Override
+  public String toString() {
+    String json = gson.toString();
+    log.debug(json);
+    return json;
   }
 }

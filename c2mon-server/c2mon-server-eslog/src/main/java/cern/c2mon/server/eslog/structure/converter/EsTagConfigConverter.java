@@ -17,6 +17,10 @@
 
 package cern.c2mon.server.eslog.structure.converter;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -33,8 +37,24 @@ public class EsTagConfigConverter implements Converter<Tag, EsTagConfig> {
 
   @Override
   public EsTagConfig convert(Tag tag) {
-    EsTagConfig esTagConfig = new EsTagConfig();
+    EsTagConfig esTagConfig = new EsTagConfig(tag.getId(), tag.getDataType());
+
+    esTagConfig.setName(tag.getName());
 
     return esTagConfig;
+  }
+
+  private void setMetadata(final Tag tag, final EsTagConfig esTagConfig) {
+    esTagConfig.getMetadata().putAll(retrieveTagMetadata(tag));
+  }
+
+  private Map<String, String> retrieveTagMetadata(Tag tag) {
+    if (tag.getMetadata() == null) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, String> metadata = new HashMap<>();
+    tag.getMetadata().getMetadata().forEach((k, v) -> metadata.put(k, v == null ? null : v.toString()));
+    return metadata;
   }
 }
