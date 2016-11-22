@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +33,9 @@ import org.springframework.util.CollectionUtils;
 
 import cern.c2mon.pmanager.persistence.IPersistenceManager;
 import cern.c2mon.server.cache.C2monBufferedCacheListener;
+import cern.c2mon.server.cache.CacheRegistrationService;
 import cern.c2mon.server.common.component.Lifecycle;
+import cern.c2mon.server.common.config.ServerConstants;
 import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.eslog.structure.converter.EsTagConfigConverter;
 import cern.c2mon.server.eslog.structure.types.tag.EsTagConfig;
@@ -45,6 +49,12 @@ import cern.c2mon.server.eslog.structure.types.tag.EsTagConfig;
 public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, SmartLifecycle {
 
   private final IPersistenceManager<EsTagConfig> esTagConfigPersistenceManager;
+
+  /**
+   * Reference to registration service.
+   */
+  private final CacheRegistrationService cacheRegistrationService;
+
   /**
    * Listener container lifecycle hook.
    */
@@ -59,11 +69,21 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
 
   @Autowired
   public EsTagConfigListener(@Qualifier("esTagConfigPersistenceManager") final IPersistenceManager<EsTagConfig> esTagConfigPersistenceManager,
-                             final EsTagConfigConverter configConverter) {
+                             final EsTagConfigConverter configConverter,
+                             final CacheRegistrationService cacheRegistrationService) {
     this.esTagConfigPersistenceManager = esTagConfigPersistenceManager;
     this.configConverter = configConverter;
+    this.cacheRegistrationService = cacheRegistrationService;
 
     log.info("ESTagConfigListener is running");
+  }
+
+  /**
+   * Registers to be notified of all Tag updates (data, rule and control tags).
+   */
+  @PostConstruct
+  public void init() {
+    listenerContainer = cacheRegistrationService.registerBufferedListenerToTags(this);
   }
 
 
@@ -74,32 +94,37 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
 
   @Override
   public void stop(Runnable runnable) {
-
+    stop();
+    runnable.run();
   }
 
   @Override
   public void start() {
-
+    log.debug("Starting Tag logger (esTagConfig");
+    running = true;
+    listenerContainer.start();
   }
 
   @Override
   public void stop() {
-
+    log.debug("Stopping Tag logger (esTagConfig)");
+    running = true;
+    listenerContainer.start();
   }
 
   @Override
   public boolean isRunning() {
-    return false;
+    return running;
   }
 
   @Override
   public int getPhase() {
-    return 0;
+    return ServerConstants.PHASE_STOP_LAST - 1;
   }
 
   @Override
   public void notifyElementUpdated(Collection<Tag> collection) {
-    if(collection == null) {
+    if (collection == null) {
       log.warn("notifyElementUpdated() = Received a null collection of tags");
       return;
     }

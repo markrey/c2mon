@@ -17,24 +17,22 @@
 
 package cern.c2mon.server.eslog.indexer;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
-import javax.jms.Connection;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.index.IndexRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
 import cern.c2mon.server.eslog.connector.Connector;
-import cern.c2mon.server.eslog.structure.types.tag.EsTag;
 import cern.c2mon.server.eslog.structure.types.tag.EsTagConfig;
 
 /**
@@ -95,22 +93,50 @@ public class EsTagConfigIndexer<T extends EsTagConfig> extends EsIndexer<T> {
       return false;
     }
 
-    boolean indexIsPresent = /*createNonExistentIndex(index)*/ true;
-    boolean typeIsPresent = /*createNonExistentMapping(index, type, tag)*/ true;
-
     String tagJson = tag.toString();
-    if (indexIsPresent && typeIsPresent) {
-      log.debug("sendTagToBatch() - New 'IndexRequest' for index {} and source {}", CONF_TAG_INDEX, tagJson);
-      IndexRequest indexNewTag = new IndexRequest(CONF_TAG_INDEX, type).source(tagJson).routing(tag.getId());
-      return connector.bulkAdd(indexNewTag);
-    }
-
-    return false;
+    log.debug("sendTagToBatch() - New 'IndexRequest' for index {} and source {}", CONF_TAG_INDEX, tagJson);
+    IndexRequest indexNewTag = new IndexRequest(CONF_TAG_INDEX, type).source(tagJson).routing(tag.getId());
+    return connector.bulkAdd(indexNewTag);
   }
 
   @Override
   public void storeData(List<T> data) throws IDBPersistenceException {
+    if (data == null) {
+      return;
+    }
 
+    try {
+      log.debug("storeData() - Try to send data by batch of size " + data.size());
+
+      this.indexTags(data);
+    }
+    catch (ElasticsearchException e) {
+      throw new IDBPersistenceException(e);
+    } finally {
+
+    }
+  }
+
+  public synchronized void indexTags(Collection<T> tags) throws IDBPersistenceException {
+    if (tags == null) {
+      return;
+    }
+
+    log.debug("indexTags() - Received a collection of " + tags.size() + " EsTagConfig tags to send by batch.");
+
+    if (CollectionUtils.isEmpty(tags)) {
+      return;
+    }
+
+    for (EsTagConfig tagConfig : tags) {
+      if (sendTagConfigToBatch(tagConfig)) {
+        log.debug(tagConfig.toString());
+      }
+    }
+
+    connector.getBulkProcessor().flush();
+
+    connector.refreshClusterStats();
   }
 
   private String generateTagType(String dataType) {

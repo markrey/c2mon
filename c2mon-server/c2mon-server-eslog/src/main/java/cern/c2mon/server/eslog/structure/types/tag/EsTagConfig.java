@@ -39,9 +39,9 @@ public class EsTagConfig implements IFallback {
   @NonNull
   protected static final transient Gson gson = GsonSupplier.INSTANCE.get();
 
-  private long id;
-  private String name;
-  private final Map<String, String> metadata = new HashMap<>();
+  protected long id;
+  protected String name;
+  protected final Map<String, String> metadata = new HashMap<>();
 
   private final EsTagC2monInfo c2mon;
 
@@ -67,7 +67,7 @@ public class EsTagConfig implements IFallback {
 
   @Override
   public String toString() {
-    String json = gson.toString();
+    String json = gson.toJson(this);
     log.debug(json);
     return json;
   }

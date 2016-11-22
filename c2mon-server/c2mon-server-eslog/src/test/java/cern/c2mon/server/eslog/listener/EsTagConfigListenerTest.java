@@ -17,7 +17,8 @@
 
 package cern.c2mon.server.eslog.listener;
 
-import lombok.Data;
+import java.util.Collections;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,16 +31,14 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import cern.c2mon.pmanager.persistence.IPersistenceManager;
 import cern.c2mon.server.cache.CacheRegistrationService;
-import cern.c2mon.server.cache.DataTagCache;
 import cern.c2mon.server.common.datatag.DataTagCacheObject;
+import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.eslog.structure.converter.EsTagConfigConverter;
-import cern.c2mon.server.eslog.structure.types.tag.EsTag;
 import cern.c2mon.server.eslog.structure.types.tag.EsTagConfig;
-import cern.c2mon.server.test.CacheObjectComparison;
 import cern.c2mon.server.test.CacheObjectCreation;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Szymon Halastra
@@ -61,16 +60,24 @@ public class EsTagConfigListenerTest {
     }
 
     @Bean
+    public CacheRegistrationService cacheRegistrationService() {
+      return mock(CacheRegistrationService.class);
+    }
+
+    @Bean
     public EsTagConfigListener esTagLogListener() {
       return new EsTagConfigListener(
               esTagConfigPersistenceManager(),
-              esTagLogConverter());
+              esTagLogConverter(),
+              cacheRegistrationService());
     }
   }
 
   @Before
   public void setUp() throws Exception {
-    reset();
+    reset(esLogConverter,
+            cacheRegistrationService,
+            esTagConfigPersistenceManager);
   }
 
   @Autowired
@@ -82,7 +89,7 @@ public class EsTagConfigListenerTest {
 
   @Autowired
   @Qualifier("esTagConfigPersistenceManager")
-  private IPersistenceManager<EsTag> tagPersistenceManager;
+  private IPersistenceManager<EsTagConfig> esTagConfigPersistenceManager;
 
 
   @Autowired
@@ -91,5 +98,7 @@ public class EsTagConfigListenerTest {
   @Test
   public void test() {
     DataTagCacheObject tag = CacheObjectCreation.createTestDataTag();
+    esTagConfigListener.notifyElementUpdated(Collections.<Tag>singletonList(tag));
+    verify(esLogConverter).convert(eq(tag));
   }
 }
