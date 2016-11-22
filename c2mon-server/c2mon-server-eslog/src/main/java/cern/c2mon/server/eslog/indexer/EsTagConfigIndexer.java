@@ -95,7 +95,7 @@ public class EsTagConfigIndexer<T extends EsTagConfig> extends EsIndexer<T> {
 
     String tagJson = tag.toString();
     log.debug("sendTagToBatch() - New 'IndexRequest' for index {} and source {}", CONF_TAG_INDEX, tagJson);
-    IndexRequest indexNewTag = new IndexRequest(CONF_TAG_INDEX, type).source(tagJson).routing(tag.getId());
+    IndexRequest indexNewTag = new IndexRequest(CONF_TAG_INDEX, type, tag.getId()).source(tagJson);
     return connector.bulkAdd(indexNewTag);
   }
 
