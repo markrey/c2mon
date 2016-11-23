@@ -31,7 +31,9 @@ import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import cern.c2mon.pmanager.IDBPersistenceHandler;
 import cern.c2mon.pmanager.persistence.IPersistenceManager;
+import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
 import cern.c2mon.server.cache.C2monBufferedCacheListener;
 import cern.c2mon.server.cache.CacheRegistrationService;
 import cern.c2mon.server.common.component.Lifecycle;
@@ -48,7 +50,7 @@ import cern.c2mon.server.eslog.structure.types.tag.EsTagConfig;
 @Service
 public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, SmartLifecycle {
 
-  private final IPersistenceManager<EsTagConfig> esTagConfigPersistenceManager;
+  private final IDBPersistenceHandler<EsTagConfig> esTagConfigPersistenceManager;
 
   /**
    * Reference to registration service.
@@ -68,10 +70,10 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
   private volatile boolean running = false;
 
   @Autowired
-  public EsTagConfigListener(@Qualifier("esTagConfigPersistenceManager") final IPersistenceManager<EsTagConfig> esTagConfigPersistenceManager,
+  public EsTagConfigListener(@Qualifier("esTagConfigPersistenceManager") final IDBPersistenceHandler<EsTagConfig> esTagConfigIDBPersistenceHandler,
                              final EsTagConfigConverter configConverter,
                              final CacheRegistrationService cacheRegistrationService) {
-    this.esTagConfigPersistenceManager = esTagConfigPersistenceManager;
+    this.esTagConfigPersistenceManager = esTagConfigIDBPersistenceHandler;
     this.configConverter = configConverter;
     this.cacheRegistrationService = cacheRegistrationService;
 
@@ -130,7 +132,12 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
     }
     log.info("notifyElementUpdated() - Received a collection of " + collection.size() + " elements");
 
-    esTagConfigPersistenceManager.storeData(convertTagsToEsTags(collection));
+    try {
+      esTagConfigPersistenceManager.storeData(convertTagsToEsTags(collection));
+    }
+    catch (IDBPersistenceException e) {
+      e.printStackTrace();
+    }
   }
 
   @Override

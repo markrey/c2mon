@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import cern.c2mon.pmanager.IDBPersistenceHandler;
 import cern.c2mon.pmanager.persistence.IPersistenceManager;
 import cern.c2mon.server.cache.CacheRegistrationService;
 import cern.c2mon.server.common.datatag.DataTagCacheObject;
@@ -55,8 +56,8 @@ public class EsTagConfigListenerTest {
     }
 
     @Bean
-    public IPersistenceManager<EsTagConfig> esTagConfigPersistenceManager() {
-      return mock(IPersistenceManager.class);
+    public IDBPersistenceHandler<EsTagConfig> esTagConfigPersistenceManager() {
+      return mock(IDBPersistenceHandler.class);
     }
 
     @Bean
@@ -89,7 +90,7 @@ public class EsTagConfigListenerTest {
 
   @Autowired
   @Qualifier("esTagConfigPersistenceManager")
-  private IPersistenceManager<EsTagConfig> esTagConfigPersistenceManager;
+  private IDBPersistenceHandler<EsTagConfig> esTagConfigPersistenceManager;
 
 
   @Autowired
