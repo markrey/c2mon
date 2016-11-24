@@ -97,7 +97,14 @@ public interface Connector {
   boolean logAlarmEvent(String indexName, String mapping, EsAlarm esAlarm);
 
   /**
-   * Allows to add data by batches to the Elasticsearch cluster thanks to a BulkProcessor.
+   * Allows to add a neew EsTagConfig to ElasticSearch
+   *
+   * @param indexRequest
+   * @return true if acknowledged by the cluster.
+   */
+  boolean logTagConfig(IndexRequest indexRequest);
+  /**
+   * Allows to add data by batches to the ElasticSearch cluster thanks to a BulkProcessor.
    *
    * @return response of the BulkProcessor.
    */

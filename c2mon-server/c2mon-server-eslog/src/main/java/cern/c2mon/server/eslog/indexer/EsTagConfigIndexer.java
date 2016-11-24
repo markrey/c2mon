@@ -33,6 +33,7 @@ import org.springframework.util.CollectionUtils;
 
 import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
 import cern.c2mon.server.eslog.connector.Connector;
+import cern.c2mon.server.eslog.structure.mappings.EsTagConfigMapping;
 import cern.c2mon.server.eslog.structure.types.tag.EsTagConfig;
 
 /**
@@ -96,7 +97,7 @@ public class EsTagConfigIndexer<T extends EsTagConfig> extends EsIndexer<T> {
     String tagJson = tag.toString();
     log.debug("sendTagToBatch() - New 'IndexRequest' for index {} and source {}", CONF_TAG_INDEX, tagJson);
     IndexRequest indexNewTag = new IndexRequest(CONF_TAG_INDEX, type, tag.getId()).source(tagJson);
-    return connector.bulkAdd(indexNewTag);
+    return connector.logTagConfig(indexNewTag);
   }
 
   @Override
