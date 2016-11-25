@@ -393,6 +393,12 @@ public interface TagService {
    */
   Collection<Tag> findByName(final Set<String> regexList);
 
+  //TODO: write proper comment
+  Collection<Tag> findByMetadata(final String regex);
+
+  //TODO: write proper comment
+  Collection<Tag> findByMetadata(Set<String> regexList);
+
   /**
    * Returns the total number of subscribed tags in the local cache (cache size).
    * @return the cache size

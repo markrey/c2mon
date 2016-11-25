@@ -17,25 +17,20 @@
 
 package cern.c2mon.server.elasticsearch.listener;
 
-import lombok.Data;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import cern.c2mon.pmanager.persistence.IPersistenceManager;
+import cern.c2mon.pmanager.IDBPersistenceHandler;
 import cern.c2mon.server.cache.CacheRegistrationService;
-import cern.c2mon.server.cache.DataTagCache;
 import cern.c2mon.server.common.datatag.DataTagCacheObject;
 import cern.c2mon.server.elasticsearch.structure.converter.EsTagConfigConverter;
-import cern.c2mon.server.elasticsearch.structure.types.tag.EsTag;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
-import cern.c2mon.server.test.CacheObjectComparison;
 import cern.c2mon.server.test.CacheObjectCreation;
 
 import static org.mockito.Mockito.mock;
@@ -58,14 +53,14 @@ public class EsTagConfigListenerTest {
     }
 
     @Bean
-    public IPersistenceManager<EsTagConfig> esTagConfigPersistenceManager() {
-      return mock(IPersistenceManager.class);
+    public IDBPersistenceHandler<EsTagConfig> esTagConfigIndexer() {
+      return mock(IDBPersistenceHandler.class);
     }
 
     @Bean
     public EsTagConfigListener esTagLogListener() {
       return new EsTagConfigListener(
-              esTagConfigPersistenceManager(),
+              esTagConfigIndexer(),
               esTagLogConverter());
     }
   }

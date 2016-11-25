@@ -29,7 +29,8 @@ import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import cern.c2mon.pmanager.persistence.IPersistenceManager;
+import cern.c2mon.pmanager.IDBPersistenceHandler;
+import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
 import cern.c2mon.server.cache.C2monBufferedCacheListener;
 import cern.c2mon.server.common.component.Lifecycle;
 import cern.c2mon.server.common.tag.Tag;
@@ -44,7 +45,10 @@ import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 @Service
 public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, SmartLifecycle {
 
-  private final IPersistenceManager<EsTagConfig> esTagConfigPersistenceManager;
+  private static final String ES_TAG_CONF_THREAD_NAME = "EsTagConf";
+
+  IDBPersistenceHandler<EsTagConfig> esTagConfigIndexer;
+
   /**
    * Listener container lifecycle hook.
    */
@@ -58,9 +62,9 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
   private volatile boolean running = false;
 
   @Autowired
-  public EsTagConfigListener(@Qualifier("esTagConfigPersistenceManager") final IPersistenceManager<EsTagConfig> esTagConfigPersistenceManager,
+  public EsTagConfigListener(@Qualifier("esTagConfigIndexer") final IDBPersistenceHandler<EsTagConfig> esTagConfigIndexer,
                              final EsTagConfigConverter configConverter) {
-    this.esTagConfigPersistenceManager = esTagConfigPersistenceManager;
+    this.esTagConfigIndexer = esTagConfigIndexer;
     this.configConverter = configConverter;
 
     log.info("ESTagConfigListener is running");
@@ -99,13 +103,18 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
 
   @Override
   public void notifyElementUpdated(Collection<Tag> collection) {
-    if(collection == null) {
+    if (collection == null) {
       log.warn("notifyElementUpdated() = Received a null collection of tags");
       return;
     }
     log.info("notifyElementUpdated() - Received a collection of " + collection.size() + " elements");
 
-    esTagConfigPersistenceManager.storeData(convertTagsToEsTags(collection));
+    try {
+      esTagConfigIndexer.storeData(convertTagsToEsTags(collection));
+    }
+    catch (IDBPersistenceException e) {
+      e.printStackTrace();
+    }
   }
 
   @Override
@@ -115,7 +124,7 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
 
   @Override
   public String getThreadName() {
-    throw new RuntimeException();
+    return ES_TAG_CONF_THREAD_NAME;
   }
 
   private List<EsTagConfig> convertTagsToEsTags(final Collection<Tag> tagsToLog) {

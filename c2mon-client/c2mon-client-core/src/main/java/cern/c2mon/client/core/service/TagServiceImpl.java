@@ -1,31 +1,27 @@
 /******************************************************************************
  * Copyright (C) 2010-2016 CERN. All rights not expressly granted are reserved.
- * 
+ *
  * This file is part of the CERN Control and Monitoring Platform 'C2MON'.
  * C2MON is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free
  * Software Foundation, either version 3 of the license.
- * 
+ *
  * C2MON is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
  * more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with C2MON. If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 package cern.c2mon.client.core.service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.jms.JMSException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -37,13 +33,12 @@ import cern.c2mon.client.common.tag.ClientDataTagValue;
 import cern.c2mon.client.common.tag.Tag;
 import cern.c2mon.client.core.cache.CacheSynchronizationException;
 import cern.c2mon.client.core.cache.ClientDataTagCache;
+import cern.c2mon.client.core.jms.RequestHandler;
 import cern.c2mon.client.core.listener.TagSubscriptionListener;
 import cern.c2mon.client.core.manager.CoreSupervisionManager;
 import cern.c2mon.client.core.tag.ClientDataTagImpl;
-import cern.c2mon.client.core.jms.RequestHandler;
 import cern.c2mon.shared.client.tag.TagUpdate;
 import cern.c2mon.shared.rule.RuleFormatException;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * The tag manager implements the <code>C2monTagManager</code> interface. It's main job is to delegate cache requests
@@ -81,7 +76,7 @@ public class TagServiceImpl implements AdvancedTagService {
    * @param requestHandler Provides methods for requesting tag information from the C2MON server
    */
   @Autowired
-  protected TagServiceImpl(final CoreSupervisionManager supervisionManager, 
+  protected TagServiceImpl(final CoreSupervisionManager supervisionManager,
                            final ClientDataTagCache cache,
                            final @Qualifier("coreRequestHandler") RequestHandler requestHandler) {
 
@@ -89,7 +84,7 @@ public class TagServiceImpl implements AdvancedTagService {
     this.cache = cache;
     this.clientRequestHandler = requestHandler;
   }
-  
+
   @Deprecated
   public Collection<ClientDataTagValue> getSubscriptions(final BaseListener listener) {
     Collection<Tag> cacheTagList = cache.getAllTagsForListener(listener);
@@ -113,7 +108,7 @@ public class TagServiceImpl implements AdvancedTagService {
 
     return clonedDataTags;
   }
-  
+
   @Deprecated
   public Set<Long> getAllSubscribedDataTagIds(final BaseListener listener) {
     return cache.getAllTagIdsForListener(listener);
@@ -218,7 +213,7 @@ public class TagServiceImpl implements AdvancedTagService {
       throw cse;
     }
   }
-  
+
   /**
    * Inner method that handles the tag subscription.
    * @param regexList List of tag ids
@@ -275,7 +270,7 @@ public class TagServiceImpl implements AdvancedTagService {
     id.add(dataTagId);
     unsubscribe(id, listener);
   }
-  
+
   @Deprecated
   public void unsubscribeAllDataTags(final BaseListener listener) {
     cache.unsubscribeAllDataTags(listener);
@@ -287,7 +282,7 @@ public class TagServiceImpl implements AdvancedTagService {
     cache.unsubscribeAllDataTags(listener);
     tagUpdateListeners.remove(listener);
   }
-  
+
   @Deprecated
   public void unsubscribeDataTags(final Set<Long> dataTagIds, final BaseListener listener) {
     cache.unsubscribeDataTags(dataTagIds, listener);
@@ -300,7 +295,7 @@ public class TagServiceImpl implements AdvancedTagService {
     tagUpdateListeners.remove(listener);
   }
 
-  
+
 
   @Override
   public void addTagSubscriptionListener(final TagSubscriptionListener listener) {
@@ -336,12 +331,12 @@ public class TagServiceImpl implements AdvancedTagService {
           try {
             ClientDataTagImpl cdt = new ClientDataTagImpl(tagUpdate.getId());
             cdt.update(tagUpdate);
-            
+
             // In case of a CommFault- or Status control tag, we don't register to supervision invalidations
             if (!tagUpdate.isControlTag() || tagUpdate.isAliveTag()) {
               supervisionManager.addSupervisionListener(cdt, cdt.getProcessIds(), cdt.getEquipmentIds(), cdt.getSubEquipmentIds());
             }
-            
+
             missingTags.remove(cdt.getId());
             resultList.add(cdt.clone());
 
@@ -357,7 +352,7 @@ public class TagServiceImpl implements AdvancedTagService {
       } catch (JMSException e) {
         log.error("get() - JMS connection lost -> Could not retrieve missing tags from the C2MON server.", e);
       }
-      
+
       for (Long tagId : missingTags) {
         resultList.add(new ClientDataTagImpl(tagId, true));
       }
@@ -387,7 +382,7 @@ public class TagServiceImpl implements AdvancedTagService {
 
     return cache.getCacheSize();
   }
-  
+
   @Deprecated
   public boolean isSubscribed(BaseListener listener) {
     return tagUpdateListeners.contains(listener);
@@ -422,12 +417,12 @@ public class TagServiceImpl implements AdvancedTagService {
   }
 
   private Collection<Tag> getByName(final Collection<String> tagNames) {
-    
+
     Collection<Tag> resultList = new ArrayList<>();
     Set<String> missingTags = new HashSet<>();
     Map<String, Tag> cachedValues = cache.getByNames(new HashSet<>(tagNames));
 
-    
+
     for (Entry<String, Tag> cacheEntry : cachedValues.entrySet()) {
       if (cacheEntry.getValue() != null) {
         resultList.add(((ClientDataTagImpl) cacheEntry.getValue()).clone());
@@ -435,11 +430,11 @@ public class TagServiceImpl implements AdvancedTagService {
         missingTags.add(cacheEntry.getKey());
       }
     }
-  
+
     if (!missingTags.isEmpty()) {
       resultList.addAll(findByName(missingTags));
     }
-    
+
     return resultList;
   }
 
@@ -458,19 +453,19 @@ public class TagServiceImpl implements AdvancedTagService {
   @Override
   public Collection<Tag> findByName(Set<String> regexList) {
     Collection<Tag> resultList = new ArrayList<Tag>();
-    
+
     try {
       Collection<TagUpdate> tagUpdates = clientRequestHandler.requestTagsByRegex(regexList);
       for (TagUpdate tagUpdate : tagUpdates) {
         try {
           ClientDataTagImpl cdt = new ClientDataTagImpl(tagUpdate.getId());
           cdt.update(tagUpdate);
-          
+
           // In case of a CommFault- or Status control tag, we don't register to supervision invalidations
           if (!tagUpdate.isControlTag() || tagUpdate.isAliveTag()) {
             supervisionManager.addSupervisionListener(cdt, cdt.getProcessIds(), cdt.getEquipmentIds(), cdt.getSubEquipmentIds());
           }
-          
+
           resultList.add(cdt.clone());
 
           if (!tagUpdate.isControlTag() || tagUpdate.isAliveTag()) {
@@ -488,7 +483,17 @@ public class TagServiceImpl implements AdvancedTagService {
 
     return resultList;
   }
-  
+
+  @Override
+  public Collection<Tag> findByMetadata(String regex) {
+    return null;
+  }
+
+  @Override
+  public Collection<Tag> findByMetadata(Set<String> regexList) {
+    return null;
+  }
+
   /**
    * Checks whether the string contains un-escaped * or ? characters
    * @param s string to scan

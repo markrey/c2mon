@@ -7,6 +7,9 @@ import cern.c2mon.pmanager.persistence.impl.PersistenceManager;
 import cern.c2mon.server.elasticsearch.structure.types.EsAlarm;
 import cern.c2mon.server.elasticsearch.structure.types.EsSupervisionEvent;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTag;
+import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagC2monInfo;
+import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
