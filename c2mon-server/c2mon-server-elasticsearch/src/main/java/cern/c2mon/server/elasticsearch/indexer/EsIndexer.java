@@ -22,7 +22,6 @@ import java.util.Date;
 import javax.annotation.PostConstruct;
 
 import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
-import cern.c2mon.server.elasticsearch.connector.Connector;
 import cern.c2mon.server.elasticsearch.connector.TransportConnector;
 import lombok.Data;
 import lombok.Getter;

@@ -21,7 +21,6 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 
 import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
-import cern.c2mon.server.elasticsearch.connector.Connector;
 import cern.c2mon.server.elasticsearch.connector.TransportConnector;
 import cern.c2mon.server.elasticsearch.structure.mappings.EsAlarmMapping;
 import lombok.Data;

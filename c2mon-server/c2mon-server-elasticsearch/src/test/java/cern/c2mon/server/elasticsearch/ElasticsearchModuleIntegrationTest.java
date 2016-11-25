@@ -17,7 +17,6 @@
 package cern.c2mon.server.elasticsearch;
 
 import cern.c2mon.server.elasticsearch.config.BaseElasticsearchIntegrationTest;
-import cern.c2mon.server.elasticsearch.connector.Connector;
 import cern.c2mon.server.elasticsearch.connector.TransportConnector;
 import cern.c2mon.server.elasticsearch.listener.EsAlarmLogListener;
 import lombok.extern.slf4j.Slf4j;

@@ -17,7 +17,6 @@
 package cern.c2mon.server.elasticsearch.indexer;
 
 import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
-import cern.c2mon.server.elasticsearch.connector.Connector;
 import cern.c2mon.server.elasticsearch.connector.TransportConnector;
 import cern.c2mon.server.elasticsearch.structure.types.EsAlarm;
 import org.elasticsearch.ElasticsearchException;
