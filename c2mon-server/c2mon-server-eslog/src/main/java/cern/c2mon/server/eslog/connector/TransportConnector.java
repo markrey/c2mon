@@ -38,6 +38,7 @@ import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -535,7 +536,19 @@ public class TransportConnector implements Connector {
 
   @Override
   public boolean logTagConfig(IndexRequest indexRequest) {
-    client.index(indexRequest);
+    if (client == null) {
+      log.error("Elasticsearch connection not (yet) initialized.");
+      return false;
+    }
+
+    log.debug("logTagConfig() - Try to write new TagConfig to in index = {}");
+
+    try {
+      IndexResponse indexResponse = client.index(indexRequest).get();
+      return indexResponse.isCreated();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
     return false;
   }
