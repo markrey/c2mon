@@ -40,32 +40,21 @@ import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 /**
  * @author Szymon Halastra
  */
-@Data
 @Slf4j
-@Service
+@Service(value = "esTagConfigListener")
 public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, SmartLifecycle {
 
   private static final String ES_TAG_CONF_THREAD_NAME = "EsTagConf";
 
   IDBPersistenceHandler<EsTagConfig> esTagConfigIndexer;
 
-  /**
-   * Listener container lifecycle hook.
-   */
-  private Lifecycle listenerContainer;
-
-  EsTagConfigConverter configConverter;
-
-  /**
-   * Lifecycle flag.
-   */
-  private volatile boolean running = false;
+  EsTagConfigConverter esTagConfigConverter;
 
   @Autowired
   public EsTagConfigListener(@Qualifier("esTagConfigIndexer") final IDBPersistenceHandler<EsTagConfig> esTagConfigIndexer,
-                             final EsTagConfigConverter configConverter) {
+                             final EsTagConfigConverter esTagConfigConverter) {
     this.esTagConfigIndexer = esTagConfigIndexer;
-    this.configConverter = configConverter;
+    this.esTagConfigConverter = esTagConfigConverter;
 
     log.info("ESTagConfigListener is running");
   }
@@ -133,7 +122,7 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
       return esTagList;
     }
 
-    tagsToLog.forEach(tag -> esTagList.add(configConverter.convert(tag)));
+    tagsToLog.forEach(tag -> esTagList.add(esTagConfigConverter.convert(tag)));
 
     return esTagList;
   }

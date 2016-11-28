@@ -71,10 +71,7 @@ public class EsTagConfigListenerTest {
   }
 
   @Autowired
-  private EsTagConfigConverter esLogConverter;
-
-  @Autowired
-  private CacheRegistrationService cacheRegistrationService;
+  private EsTagConfigConverter esTagConfigConverter;
 
   @Autowired
   private EsTagConfigListener esTagConfigListener;
