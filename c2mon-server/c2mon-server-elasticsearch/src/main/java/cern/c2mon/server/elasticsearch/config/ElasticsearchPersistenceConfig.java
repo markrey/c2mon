@@ -4,6 +4,7 @@ import cern.c2mon.pmanager.IAlarmListener;
 import cern.c2mon.pmanager.IDBPersistenceHandler;
 import cern.c2mon.pmanager.persistence.IPersistenceManager;
 import cern.c2mon.pmanager.persistence.impl.PersistenceManager;
+import cern.c2mon.server.elasticsearch.indexer.EsTagConfigIndexer;
 import cern.c2mon.server.elasticsearch.structure.types.EsAlarm;
 import cern.c2mon.server.elasticsearch.structure.types.EsSupervisionEvent;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTag;
@@ -25,21 +26,21 @@ public class ElasticsearchPersistenceConfig {
 
   @Bean
   public IPersistenceManager<EsTag> esTagPersistenceManager(final IDBPersistenceHandler<EsTag> esTagIndexer,
-      final IAlarmListener esAlarmListener) {
+                                                            final IAlarmListener esAlarmListener) {
     String fallbackFile = properties.getTagFallbackFile();
     return new PersistenceManager<>(esTagIndexer, fallbackFile, esAlarmListener, new EsTag());
   }
 
   @Bean
   public IPersistenceManager<EsAlarm> esAlarmPersistenceManager(final IDBPersistenceHandler<EsAlarm> esAlarmIndexer,
-      final IAlarmListener esAlarmListener) {
+                                                                final IAlarmListener esAlarmListener) {
     String fallbackFile = properties.getAlarmFallbackFile();
     return new PersistenceManager<>(esAlarmIndexer, fallbackFile, esAlarmListener, new EsAlarm());
   }
 
   @Bean
   public IPersistenceManager<EsSupervisionEvent> esSupervisionEventPersistenceManager(
-      final IDBPersistenceHandler<EsSupervisionEvent> esSupervisionEventIndexer, final IAlarmListener esAlarmListener) {
+          final IDBPersistenceHandler<EsSupervisionEvent> esSupervisionEventIndexer, final IAlarmListener esAlarmListener) {
     String fallbackFile = properties.getSupervisionFallbackFile();
     return new PersistenceManager<>(esSupervisionEventIndexer, fallbackFile, esAlarmListener, new EsSupervisionEvent());
   }

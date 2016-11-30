@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 
 import javax.jms.JMSException;
 
+import jdk.internal.util.xml.impl.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,6 +34,7 @@ import cern.c2mon.client.common.tag.ClientDataTagValue;
 import cern.c2mon.client.common.tag.Tag;
 import cern.c2mon.client.core.cache.CacheSynchronizationException;
 import cern.c2mon.client.core.cache.ClientDataTagCache;
+import cern.c2mon.client.core.elasticsearch.ElasticsearchService;
 import cern.c2mon.client.core.jms.RequestHandler;
 import cern.c2mon.client.core.listener.TagSubscriptionListener;
 import cern.c2mon.client.core.manager.CoreSupervisionManager;
@@ -68,6 +70,8 @@ public class TagServiceImpl implements AdvancedTagService {
   /** List of subscribed data tag update listeners */
   private final Set<BaseListener> tagUpdateListeners = new HashSet<>();
 
+  private final ElasticsearchService elasticsearchService;
+
   /**
    * Default Constructor, used by Spring to instantiate the Singleton service
    *
@@ -78,11 +82,13 @@ public class TagServiceImpl implements AdvancedTagService {
   @Autowired
   protected TagServiceImpl(final CoreSupervisionManager supervisionManager,
                            final ClientDataTagCache cache,
-                           final @Qualifier("coreRequestHandler") RequestHandler requestHandler) {
+                           final @Qualifier("coreRequestHandler") RequestHandler requestHandler,
+                           final ElasticsearchService elasticsearchService) {
 
     this.supervisionManager = supervisionManager;
     this.cache = cache;
     this.clientRequestHandler = requestHandler;
+    this.elasticsearchService = elasticsearchService;
   }
 
   @Deprecated
@@ -440,14 +446,16 @@ public class TagServiceImpl implements AdvancedTagService {
 
   @Override
   public Collection<Tag> findByName(String regex) {
-    if (hasWildcard(regex)) {
-      Set<String> regexList = new HashSet<>();
-      regexList.add(regex);
-      return findByName(regexList);
-    }
-    else {
-      return getByName(Arrays.asList(new String[]{regex}));
-    }
+    return elasticsearchService.findByName(regex);
+
+//    if (hasWildcard(regex)) {
+//      Set<String> regexList = new HashSet<>();
+//      regexList.add(regex);
+//      return findByName(regexList);
+//    }
+//    else {
+//      return getByName(Arrays.asList(new String[]{regex}));
+//    }
   }
 
   @Override
@@ -485,13 +493,19 @@ public class TagServiceImpl implements AdvancedTagService {
   }
 
   @Override
-  public Collection<Tag> findByMetadata(String regex) {
-    return null;
+  public Collection<Tag> findByMetadata(String key, String value) {
+    return elasticsearchService.findByMetadata(key, value);
   }
 
   @Override
-  public Collection<Tag> findByMetadata(Set<String> regexList) {
-    return null;
+  public Collection<Tag> findByMetadata(Map<String, String> metadata) {
+    Collection<Tag> tags = new ArrayList<>();
+
+    for(Map.Entry<String, String> entry : metadata.entrySet()) {
+      tags.addAll(findByMetadata(entry.getKey(), entry.getValue()));
+    }
+
+    return tags;
   }
 
   /**

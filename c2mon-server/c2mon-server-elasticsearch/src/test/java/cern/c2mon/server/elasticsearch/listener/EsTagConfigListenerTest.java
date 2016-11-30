@@ -17,67 +17,52 @@
 
 package cern.c2mon.server.elasticsearch.listener;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
-import cern.c2mon.pmanager.IDBPersistenceHandler;
-import cern.c2mon.server.cache.CacheRegistrationService;
-import cern.c2mon.server.common.datatag.DataTagCacheObject;
+import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
+import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.elasticsearch.structure.converter.EsTagConfigConverter;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 import cern.c2mon.server.test.CacheObjectCreation;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Szymon Halastra
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {
-        EsTagConfigListenerTest.TagLogListenerTestConfiguration.class
-})
+@RunWith(MockitoJUnitRunner.class)
 public class EsTagConfigListenerTest {
 
-  @Configuration
-  public static class TagLogListenerTestConfiguration {
-    @Bean
-    public EsTagConfigConverter esTagLogConverter() {
-      return mock(EsTagConfigConverter.class);
-    }
-
-    @Bean
-    public IDBPersistenceHandler<EsTagConfig> esTagConfigIndexer() {
-      return mock(IDBPersistenceHandler.class);
-    }
-
-    @Bean
-    public EsTagConfigListener esTagLogListener() {
-      return new EsTagConfigListener(
-              esTagConfigIndexer(),
-              esTagLogConverter());
-    }
-  }
-
-  @Before
-  public void setUp() throws Exception {
-    reset();
-  }
-
-  @Autowired
-  private EsTagConfigConverter esTagConfigConverter;
-
-  @Autowired
+  @InjectMocks
   private EsTagConfigListener esTagConfigListener;
 
+  @Mock
+  private EsTagConfigConverter esTagConfigConverter;
+
+  private Tag tag = CacheObjectCreation.createTestDataTag();
+  private EsTagConfig esTagConfig = new EsTagConfig();
+
+  @Before
+  public void setup() {
+    when(esTagConfigConverter.convert(eq(tag))).thenReturn(esTagConfig);
+  }
+
   @Test
-  public void test() {
-    DataTagCacheObject tag = CacheObjectCreation.createTestDataTag();
+  public void testEsTagSentToIndexer() throws IDBPersistenceException {
+    Collection<Tag> tags = new ArrayList<>();
+    tags.add(tag);
+
+    esTagConfigListener.notifyElementUpdated(tags);
+    verify(esTagConfigConverter).convert(eq(tag));
   }
 }

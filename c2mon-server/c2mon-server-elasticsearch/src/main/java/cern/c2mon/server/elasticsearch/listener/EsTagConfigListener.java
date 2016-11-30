@@ -21,7 +21,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import lombok.Data;
+import javax.annotation.PostConstruct;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,7 +33,9 @@ import org.springframework.util.CollectionUtils;
 import cern.c2mon.pmanager.IDBPersistenceHandler;
 import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
 import cern.c2mon.server.cache.C2monBufferedCacheListener;
+import cern.c2mon.server.cache.CacheRegistrationService;
 import cern.c2mon.server.common.component.Lifecycle;
+import cern.c2mon.server.common.config.ServerConstants;
 import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.elasticsearch.structure.converter.EsTagConfigConverter;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
@@ -46,19 +49,40 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
 
   private static final String ES_TAG_CONF_THREAD_NAME = "EsTagConf";
 
+  /**
+   * Reference to registration service.
+   */
+  private final CacheRegistrationService cacheRegistrationService;
+
   IDBPersistenceHandler<EsTagConfig> esTagConfigIndexer;
 
   EsTagConfigConverter esTagConfigConverter;
 
+  /**
+   * Listener container lifecycle hook.
+   */
+  private Lifecycle listenerContainer;
+
+  /**
+   * Lifecycle flag.
+   */
+  private volatile boolean running = false;
+
   @Autowired
   public EsTagConfigListener(@Qualifier("esTagConfigIndexer") final IDBPersistenceHandler<EsTagConfig> esTagConfigIndexer,
+                             final CacheRegistrationService cacheRegistrationService,
                              final EsTagConfigConverter esTagConfigConverter) {
     this.esTagConfigIndexer = esTagConfigIndexer;
+    this.cacheRegistrationService = cacheRegistrationService;
     this.esTagConfigConverter = esTagConfigConverter;
 
     log.info("ESTagConfigListener is running");
   }
 
+  @PostConstruct
+  public void init() {
+    listenerContainer = cacheRegistrationService.registerBufferedListenerToTags(this);
+  }
 
   @Override
   public boolean isAutoStartup() {
@@ -67,27 +91,33 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
 
   @Override
   public void stop(Runnable runnable) {
-
+    log.debug("Stopping Alarm logger (elasticsearch)");
+    listenerContainer.stop();
+    running = false;
   }
 
   @Override
   public void start() {
-
+    log.debug("Starting Alarm logger (elasticsearch)");
+    running = true;
+    listenerContainer.start();
   }
 
   @Override
   public void stop() {
-
+    log.debug("Stopping Tag logger (elasticsearch)");
+    listenerContainer.stop();
+    running = false;
   }
 
   @Override
   public boolean isRunning() {
-    return false;
+    return running;
   }
 
   @Override
   public int getPhase() {
-    return 0;
+    return ServerConstants.PHASE_STOP_LAST - 1;
   }
 
   @Override

@@ -1,22 +1,23 @@
 /******************************************************************************
  * Copyright (C) 2010-2016 CERN. All rights not expressly granted are reserved.
- * 
+ *
  * This file is part of the CERN Control and Monitoring Platform 'C2MON'.
  * C2MON is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free
  * Software Foundation, either version 3 of the license.
- * 
+ *
  * C2MON is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
  * more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with C2MON. If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 package cern.c2mon.client.core;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import cern.c2mon.client.common.listener.BaseTagListener;
@@ -26,7 +27,7 @@ import cern.c2mon.client.core.cache.CacheSynchronizationException;
 
 /**
  * This interface describes the methods which are provided by
- * the C2MON TagService singleton. 
+ * the C2MON TagService singleton.
  * <p>
  * The tag service allows e.g. subscribing listeners to tags
  * to get informed when a new update is received.
@@ -69,7 +70,7 @@ public interface TagService {
    * @see C2monSupervisionManager#isServerConnectionWorking();
    */
   void subscribe(final Long tagId, final BaseTagListener listener) throws CacheSynchronizationException;
-  
+
   /**
    * Registers a listener to receive the current (initial) values and updates for all tags where the
    * name matches the regular expression. If the string contains no special characters the server will
@@ -94,7 +95,7 @@ public interface TagService {
    * </ul>
    * The supported wildcard characters can be escaped with a backslash '\', and a literal backslash can be included with '\\'
    * <p />
-   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches 
+   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches
    *
    * @param regex A concrete tag name or wildcard expression, which shall be used to subscribe to all matching data tags.
    * @param listener the listener which shall be registered
@@ -133,10 +134,10 @@ public interface TagService {
    * </ul>
    * The supported wildcard characters can be escaped with a backslash '\', and a literal backslash can be included with '\\'
    * <p />
-   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches 
+   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches
    *
    * @param regex A concrete tag name or wildcard expression, which shall be used to subscribe to all matching data tags.
-   * @param listener the listener which shall be registered and which will receive the initial values in 
+   * @param listener the listener which shall be registered and which will receive the initial values in
    *                 a separate method
    * @throws CacheSynchronizationException In case a communication problem with the C2MON server
    *         occurs while subscribing to the tag. In that case the {@link TagService} will
@@ -146,7 +147,7 @@ public interface TagService {
    */
   void subscribeByName(final String regex, final TagListener listener) throws CacheSynchronizationException;
 
-  
+
   /**
    * Registers a listener to receive the current (initial) values and updates for all tags, where the
    * name matches the regular expression.
@@ -170,7 +171,7 @@ public interface TagService {
    * </ul>
    * The supported wildcard characters can be escaped with a backslash '\', and a literal backslash can be included with '\\'
    * <p />
-   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches 
+   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches
    *
    * @param regexList List of concrete tag names and/or wildcard expressions, which shall be used to subscribe to all matching data tags.
    * @param listener the listener which shall be registered
@@ -208,7 +209,7 @@ public interface TagService {
    * </ul>
    * The supported wildcard characters can be escaped with a backslash '\', and a literal backslash can be included with '\\'
    * <p />
-   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches 
+   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches
    *
    * @param regexList List of concrete tag names and/or wildcard expressions, which shall be used to subscribe to all matching data tags.
    * @param listener the listener which shall be registered
@@ -220,7 +221,7 @@ public interface TagService {
    */
   void subscribeByName(final Set<String> regexList, final TagListener listener) throws CacheSynchronizationException;
 
-  
+
   /**
    * Registers a listener to receive updates for specific data tags.
    * The method will return the initial values of the subscribed tags to {@link TagListener#onInitialUpdate(Collection)}.
@@ -262,8 +263,8 @@ public interface TagService {
    */
   void subscribe(final Long tagId, final TagListener listener) throws CacheSynchronizationException;
 
-  
-  
+
+
   /**
    * Use this method for unregistering a listener from receiving updates for specific data tags.
    *
@@ -344,7 +345,7 @@ public interface TagService {
    * @see C2monSupervisionManager#isServerConnectionWorking();
    */
   Collection<Tag> get(final Collection<Long> tagIds);
-  
+
   /**
    * Returns a list of tags which match the given wilcard expression. Different to
    * {@link #get(Collection)} this call will always result in a server request.
@@ -358,7 +359,7 @@ public interface TagService {
    * </ul>
    * The supported wildcard characters can be escaped with a backslash '\', and a literal backslash can be included with '\\'
    * <p />
-   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches 
+   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches
    *
    * @param tagIds A collection of data tag id's
    * @return A collection of all <code>Tag</code> objects
@@ -368,7 +369,7 @@ public interface TagService {
    * @see C2monSupervisionManager#isServerConnectionWorking();
    */
   Collection<Tag> findByName(final String regex);
-  
+
   /**
    * Returns a list of all tags which match the given list of wilcard expressions. Different to
    * {@link #get(Collection)} this call will always result in a server request.
@@ -382,7 +383,7 @@ public interface TagService {
    * </ul>
    * The supported wildcard characters can be escaped with a backslash '\', and a literal backslash can be included with '\\'
    * <p />
-   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches 
+   * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches
    *
    * @param tagIds A collection of data tag id's
    * @return A collection of all <code>Tag</code> objects
@@ -394,10 +395,10 @@ public interface TagService {
   Collection<Tag> findByName(final Set<String> regexList);
 
   //TODO: write proper comment
-  Collection<Tag> findByMetadata(final String regex);
+  Collection<Tag> findByMetadata(String key, String value);
 
   //TODO: write proper comment
-  Collection<Tag> findByMetadata(Set<String> regexList);
+  Collection<Tag> findByMetadata(Map<String, String> metadata);
 
   /**
    * Returns the total number of subscribed tags in the local cache (cache size).
