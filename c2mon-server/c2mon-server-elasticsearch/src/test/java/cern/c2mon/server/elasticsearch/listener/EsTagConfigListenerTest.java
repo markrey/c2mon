@@ -29,6 +29,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
 import cern.c2mon.server.common.tag.Tag;
+import cern.c2mon.server.elasticsearch.indexer.EsTagConfigIndexer;
 import cern.c2mon.server.elasticsearch.structure.converter.EsTagConfigConverter;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 import cern.c2mon.server.test.CacheObjectCreation;
@@ -49,6 +50,9 @@ public class EsTagConfigListenerTest {
   @Mock
   private EsTagConfigConverter esTagConfigConverter;
 
+  @Mock
+  private EsTagConfigIndexer esTagConfigIndexer;
+
   private Tag tag = CacheObjectCreation.createTestDataTag();
   private EsTagConfig esTagConfig = new EsTagConfig();
 
@@ -58,7 +62,7 @@ public class EsTagConfigListenerTest {
   }
 
   @Test
-  public void testEsTagSentToIndexer() throws IDBPersistenceException {
+  public void testEsTagConfigSentToIndexer() throws IDBPersistenceException {
     Collection<Tag> tags = new ArrayList<>();
     tags.add(tag);
 
