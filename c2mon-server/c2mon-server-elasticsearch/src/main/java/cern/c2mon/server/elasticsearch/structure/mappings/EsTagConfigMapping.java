@@ -33,12 +33,10 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 public class EsTagConfigMapping implements EsMapping {
 
-  protected Routing _routing;
   protected final Properties properties;
   private static transient Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
   public EsTagConfigMapping(String esTagConfigType, String dataType) {
-    this._routing = new Routing();
     this.properties = new Properties(esTagConfigType, dataType);
   }
 
@@ -47,11 +45,6 @@ public class EsTagConfigMapping implements EsMapping {
     String json = gson.toJson(this);
     log.trace("getMapping() - Created the mapping : " + json);
     return json;
-  }
-
-  @Getter
-  private class Routing {
-    final String required = "true";
   }
 
   @Getter

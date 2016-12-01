@@ -17,10 +17,6 @@
 
 package cern.c2mon.server.elasticsearch.listener;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import javax.annotation.PostConstruct;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,15 +24,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
-import cern.c2mon.pmanager.IDBPersistenceHandler;
 import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
-import cern.c2mon.server.cache.C2monBufferedCacheListener;
+import cern.c2mon.server.cache.C2monCacheListener;
 import cern.c2mon.server.cache.CacheRegistrationService;
 import cern.c2mon.server.common.component.Lifecycle;
 import cern.c2mon.server.common.config.ServerConstants;
 import cern.c2mon.server.common.tag.Tag;
+import cern.c2mon.server.elasticsearch.indexer.EsTagConfigIndexer;
 import cern.c2mon.server.elasticsearch.structure.converter.EsTagConfigConverter;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 
@@ -44,17 +39,15 @@ import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
  * @author Szymon Halastra
  */
 @Slf4j
-@Service(value = "esTagConfigListener")
-public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, SmartLifecycle {
-
-  private static final String ES_TAG_CONF_THREAD_NAME = "EsTagConf";
+@Service
+public class EsTagConfigListener implements C2monCacheListener<Tag>, SmartLifecycle {
 
   /**
    * Reference to registration service.
    */
   private final CacheRegistrationService cacheRegistrationService;
 
-  IDBPersistenceHandler<EsTagConfig> esTagConfigIndexer;
+  EsTagConfigIndexer<EsTagConfig> esTagConfigIndexer;
 
   EsTagConfigConverter esTagConfigConverter;
 
@@ -69,7 +62,7 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
   private volatile boolean running = false;
 
   @Autowired
-  public EsTagConfigListener(@Qualifier("esTagConfigIndexer") final IDBPersistenceHandler<EsTagConfig> esTagConfigIndexer,
+  public EsTagConfigListener(@Qualifier("esTagConfigIndexer") final EsTagConfigIndexer<EsTagConfig> esTagConfigIndexer,
                              final CacheRegistrationService cacheRegistrationService,
                              final EsTagConfigConverter esTagConfigConverter) {
     this.esTagConfigIndexer = esTagConfigIndexer;
@@ -79,9 +72,12 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
     log.info("ESTagConfigListener is running");
   }
 
+  /**
+   * Registers to be notified of all Tag updates (data, rule and control tags).
+   */
   @PostConstruct
   public void init() {
-    listenerContainer = cacheRegistrationService.registerBufferedListenerToTags(this);
+    listenerContainer = cacheRegistrationService.registerToAllTags(this);
   }
 
   @Override
@@ -91,21 +87,21 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
 
   @Override
   public void stop(Runnable runnable) {
-    log.debug("Stopping Alarm logger (elasticsearch)");
+    log.debug("Stopping TagConfig logger (elasticsearch)");
     listenerContainer.stop();
     running = false;
   }
 
   @Override
   public void start() {
-    log.debug("Starting Alarm logger (elasticsearch)");
+    log.debug("Starting TagConfig logger (elasticsearch)");
     running = true;
     listenerContainer.start();
   }
 
   @Override
   public void stop() {
-    log.debug("Stopping Tag logger (elasticsearch)");
+    log.debug("Stopping TagConfig logger (elasticsearch)");
     listenerContainer.stop();
     running = false;
   }
@@ -120,40 +116,32 @@ public class EsTagConfigListener implements C2monBufferedCacheListener<Tag>, Sma
     return ServerConstants.PHASE_STOP_LAST - 1;
   }
 
+  private EsTagConfig convertTagsToEsTags(final Tag tagToLog) {
+    if (tagToLog == null) {
+      return null;
+    }
+
+    return esTagConfigConverter.convert(tagToLog);
+  }
+
   @Override
-  public void notifyElementUpdated(Collection<Tag> collection) {
-    if (collection == null) {
-      log.warn("notifyElementUpdated() = Received a null collection of tags");
+  public void notifyElementUpdated(Tag cacheable) {
+    if (cacheable == null) {
+      log.warn("Received a null");
       return;
     }
-    log.info("notifyElementUpdated() - Received a collection of " + collection.size() + " elements");
+    log.info("Received a TagConfig");
 
     try {
-      esTagConfigIndexer.storeData(convertTagsToEsTags(collection));
+      esTagConfigIndexer.storeData(convertTagsToEsTags(cacheable));
     }
     catch (IDBPersistenceException e) {
-      e.printStackTrace();
+      log.warn("Problem occurred during storing data attempt", e);
     }
   }
 
   @Override
-  public void confirmStatus(Collection<Tag> eventCollection) {
+  public void confirmStatus(Tag cacheable) {
 
-  }
-
-  @Override
-  public String getThreadName() {
-    return ES_TAG_CONF_THREAD_NAME;
-  }
-
-  private List<EsTagConfig> convertTagsToEsTags(final Collection<Tag> tagsToLog) {
-    final List<EsTagConfig> esTagList = new ArrayList<>();
-    if (CollectionUtils.isEmpty(tagsToLog)) {
-      return esTagList;
-    }
-
-    tagsToLog.forEach(tag -> esTagList.add(esTagConfigConverter.convert(tag)));
-
-    return esTagList;
   }
 }

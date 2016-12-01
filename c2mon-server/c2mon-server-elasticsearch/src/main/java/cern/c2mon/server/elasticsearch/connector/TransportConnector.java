@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
-import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
-import cern.c2mon.server.elasticsearch.structure.types.tag.EsTag;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
@@ -58,10 +56,12 @@ import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.node.Node;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
+import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
 import cern.c2mon.server.elasticsearch.structure.types.EsAlarm;
 import cern.c2mon.server.elasticsearch.structure.types.EsSupervisionEvent;
-import org.springframework.util.Assert;
+import cern.c2mon.server.elasticsearch.structure.types.tag.EsTag;
 
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
@@ -454,19 +454,19 @@ public class TransportConnector {
     return false;
   }
 
-  public boolean logTagConfig(IndexRequest indexRequest) {
+  public boolean logTagConfig(String indexName, IndexRequest indexRequest) {
     if (client == null) {
       log.error("Elasticsearch connection not (yet) initialized.");
       return false;
     }
 
-    log.debug("logTagConfig() - Try to write new TagConfig to in index = {}");
+    log.debug("Try to write new TagConfig to in index = {}", indexName);
 
     try {
       IndexResponse indexResponse = client.index(indexRequest).get();
       return indexResponse.isCreated();
     } catch (Exception e) {
-      e.printStackTrace();
+      log.error("Error occurred while logging the EsTagConfig for index={}", indexName, e);
     }
 
     return false;

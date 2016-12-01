@@ -17,55 +17,55 @@
 
 package cern.c2mon.server.elasticsearch.indexer;
 
-import org.elasticsearch.action.index.IndexRequest;
-import org.junit.Before;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
-import cern.c2mon.server.common.tag.Tag;
+import cern.c2mon.server.elasticsearch.config.BaseElasticsearchIntegrationTest;
+import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
 import cern.c2mon.server.elasticsearch.connector.TransportConnector;
-import cern.c2mon.server.elasticsearch.structure.converter.EsTagConfigConverter;
-import cern.c2mon.server.elasticsearch.structure.mappings.EsTagConfigMapping;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
-import cern.c2mon.server.test.CacheObjectCreation;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Szymon Halastra
  */
-@RunWith(MockitoJUnitRunner.class)
-public class EsTagConfigIndexerTest {
-  private Tag tag;
-  private EsTagConfig esTagConfig;
-  private EsTagConfigMapping esTagConfigMapping;
+public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
 
-  @InjectMocks
+  private static final String CONF_TAG_INDEX = "c2mon-conf-tag";
+
+  @Autowired
   private EsTagConfigIndexer<EsTagConfig> indexer;
 
-  @Mock
-  private TransportConnector connector;
-  private EsTagConfigConverter converter = new EsTagConfigConverter();
+  @Autowired
+  TransportConnector connector;
 
-  @Before
-  public void setup() throws IDBPersistenceException {
-    tag = CacheObjectCreation.createTestDataTag();
-    esTagConfig = converter.convert(tag);
+  @Autowired
+  private ElasticsearchProperties properties;
 
-//    when(connector.logTagConfig(new IndexRequest(anyString(), anyString(), eq(esTagConfig.toString())))).thenReturn(true);
+  @Test
+  public void testInit() {
+    assertTrue(connector.isConnected());
   }
 
   @Test
-  public void testInitWell() throws IDBPersistenceException {
-    when(connector.isConnected()).thenReturn(true);
-    indexer.init();
-    assertTrue(indexer.isAvailable());
+  public void testStoreSingleEsTagConfig() throws IDBPersistenceException {
+    EsTagConfig esTagConfig = new EsTagConfig(1L, Boolean.class.getName());
+
+    connector.getClient().admin().indices().delete(new DeleteIndexRequest(CONF_TAG_INDEX)).actionGet();
+
+    indexer.storeData(esTagConfig);
+
+    SearchResponse response = connector.getClient().prepareSearch(new String[]{CONF_TAG_INDEX})
+            .setSearchType(SearchType.DEFAULT).setQuery(QueryBuilders.matchAllQuery())
+            .execute().actionGet();
+
+    assertEquals(1, response.getHits().getTotalHits());
   }
 }

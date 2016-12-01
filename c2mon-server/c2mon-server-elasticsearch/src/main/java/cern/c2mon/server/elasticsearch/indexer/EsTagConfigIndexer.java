@@ -22,8 +22,7 @@ import java.util.List;
 
 import javax.annotation.PostConstruct;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.index.IndexRequest;
@@ -40,33 +39,27 @@ import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
  * @author Szymon Halastra
  */
 @Slf4j
-@Data
-@EqualsAndHashCode(callSuper = false)
-@Component("esTagConfigIndexer")
-public class EsTagConfigIndexer<T extends EsTagConfig> extends EsIndexer<T> {
+@Component
+public class EsTagConfigIndexer<T extends EsTagConfig> {
 
-  private static final String CONF_TAG_INDEX = "c2mon-conf-tag";
+  @Autowired
+  @Setter
+  private ElasticsearchProperties properties;
 
-  /**
-   * @param connector handling the connection to ElasticSearch.
-   */
+  @Autowired
+  private TransportConnector connector;
+
   @Autowired
   public EsTagConfigIndexer(final TransportConnector connector, final ElasticsearchProperties properties) {
-    super(connector, properties);
+    this.connector = connector;
+    this.properties = properties;
   }
 
-  /**
-   * make sure the connection is alive.
-   */
-  @Override
   @PostConstruct
   public void init() throws IDBPersistenceException {
-    super.init();
-
-    connector.createIndex(CONF_TAG_INDEX);
+    connector.createIndex(properties.getIndexTagConfig());
   }
 
-  @Override
   public void storeData(T object) throws IDBPersistenceException {
     if (object == null) {
       return;
@@ -74,33 +67,30 @@ public class EsTagConfigIndexer<T extends EsTagConfig> extends EsIndexer<T> {
 
     boolean logged = false;
     try {
-      logged = sendTagConfigToBatch(object);
+      logged = indexTagConfig(object);
     }
     catch (Exception e) {
       throw new IDBPersistenceException(e);
     }
   }
 
-  protected boolean sendTagConfigToBatch(EsTagConfig tag) {
+  protected boolean indexTagConfig(EsTagConfig tag) {
     String type = generateTagType(tag.getC2mon().getDataType());
 
-    if (log.isTraceEnabled()) {
-      log.trace("Indexing a new tag (#{})", tag.getId());
-      log.trace("Type = {}", type);
-    }
+    log.trace("Indexing a new tag (#{}) with type={}", tag.getId(), type);
 
     if (type == null /*|| !checkIndex(index)*/) {
-      log.warn("sendTagToBatch() - Error while indexing tag #{}. Bad index {}  -> Tag will not be sent to elasticsearch!", tag.getId(), CONF_TAG_INDEX);
+      log.warn("Error while indexing tag #{}. Bad index {}  -> Tag will not be sent to elasticsearch!",
+              tag.getId(), properties.getIndexTagConfig());
       return false;
     }
 
     String tagJson = tag.toString();
-    log.debug("sendTagToBatch() - New 'IndexRequest' for index {} and source {}", CONF_TAG_INDEX, tagJson);
-    IndexRequest indexNewTag = new IndexRequest(CONF_TAG_INDEX, type, tag.getId()).source(tagJson);
-    return connector.logTagConfig(indexNewTag);
+    log.debug("sendTagToBatch() - New 'IndexRequest' for index {} and source {}", properties.getIndexTagConfig(), tagJson);
+    IndexRequest indexNewTag = new IndexRequest(properties.getIndexTagConfig(), type, String.valueOf(tag.getId())).source(tagJson);
+    return connector.logTagConfig(properties.getIndexTagConfig(), indexNewTag);
   }
 
-  @Override
   public void storeData(List<T> data) throws IDBPersistenceException {
     if (data == null) {
       return;
@@ -130,7 +120,7 @@ public class EsTagConfigIndexer<T extends EsTagConfig> extends EsIndexer<T> {
     }
 
     for (EsTagConfig tagConfig : tags) {
-      if (sendTagConfigToBatch(tagConfig)) {
+      if (indexTagConfig(tagConfig)) {
         log.debug(tagConfig.toString());
       }
     }

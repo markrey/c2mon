@@ -63,10 +63,7 @@ public class EsTagConfigListenerTest {
 
   @Test
   public void testEsTagConfigSentToIndexer() throws IDBPersistenceException {
-    Collection<Tag> tags = new ArrayList<>();
-    tags.add(tag);
-
-    esTagConfigListener.notifyElementUpdated(tags);
+    esTagConfigListener.notifyElementUpdated(tag);
     verify(esTagConfigConverter).convert(eq(tag));
   }
 }

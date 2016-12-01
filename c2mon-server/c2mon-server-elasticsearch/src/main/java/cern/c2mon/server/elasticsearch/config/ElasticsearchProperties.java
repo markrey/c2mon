@@ -58,6 +58,11 @@ public class ElasticsearchProperties {
   private String indexPrefix = "c2mon";
 
   /**
+   * Index name used for C2MON Tag Config. This is final format
+   */
+  private String indexTagConfig = indexPrefix + "-tag-config";
+
+  /**
    * Timeseries index bucketing strategy. Possible values:
    *
    * - M (or m): monthly indices (YYYY-MM)

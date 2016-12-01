@@ -34,7 +34,7 @@ import cern.c2mon.server.elasticsearch.structure.types.GsonSupplier;
  */
 @Data
 @Slf4j
-public class EsTagConfig implements IFallback {
+public class EsTagConfig {
 
   @NonNull
   protected static final transient Gson gson = GsonSupplier.INSTANCE.get();
@@ -53,16 +53,6 @@ public class EsTagConfig implements IFallback {
   public EsTagConfig(Long id, String dataType) {
     this.id = id;
     this.c2mon = new EsTagC2monInfo(dataType);
-  }
-
-  @Override
-  public IFallback getObject(String line) throws DataFallbackException {
-    return gson.fromJson(line, EsTagConfig.class);
-  }
-
-  @Override
-  public String getId() {
-    return String.valueOf(id);
   }
 
   @Override
