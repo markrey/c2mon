@@ -37,15 +37,9 @@ public class EsTagConfigConverter implements Converter<Tag, EsTagConfig> {
 
   @Override
   public EsTagConfig convert(Tag tag) {
-    EsTagConfig esTagConfig = new EsTagConfig(tag.getId(), tag.getDataType());
-
-    esTagConfig.setName(tag.getName());
+    EsTagConfig esTagConfig = new EsTagConfig(tag.getId(), tag.getName(), tag.getDataType(), retrieveTagMetadata(tag));
 
     return esTagConfig;
-  }
-
-  private void setMetadata(final Tag tag, final EsTagConfig esTagConfig) {
-    esTagConfig.getMetadata().putAll(retrieveTagMetadata(tag));
   }
 
   private Map<String, String> retrieveTagMetadata(Tag tag) {

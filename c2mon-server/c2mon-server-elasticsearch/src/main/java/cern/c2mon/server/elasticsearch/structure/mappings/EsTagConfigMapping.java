@@ -36,15 +36,13 @@ public class EsTagConfigMapping implements EsMapping {
   protected final Properties properties;
   private static transient Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-  public EsTagConfigMapping(String esTagConfigType, String dataType) {
-    this.properties = new Properties(esTagConfigType, dataType);
+  public EsTagConfigMapping() {
+    this.properties = new Properties();
   }
 
   @Override
   public String getMapping() {
-    String json = gson.toJson(this);
-    log.trace("getMapping() - Created the mapping : " + json);
-    return json;
+    return gson.toJson(this);
   }
 
   @Getter
@@ -53,22 +51,17 @@ public class EsTagConfigMapping implements EsMapping {
     Name name;
 
     /** Valid types are: "number", "boolean", "string", "object" */
-    Type type;
     Unit unit;
-
 
     C2monMetadata c2mon;
     Metadata metadata;
 
-    /**
-     * @param esTagType The ES tag type set in {@link EsTag}
-     * @param dataType The data type to the corresponding tag
-     */
-    Properties(String esTagType, String dataType) {
+    StatusInfo statusInfo;
+
+    Properties() {
       this.id = new Id();
       this.name = new Name();
 
-      this.type = new Type();
       this.unit = new Unit();
 
       this.c2mon = new C2monMetadata();
@@ -103,11 +96,6 @@ public class EsTagConfigMapping implements EsMapping {
     class DaqTimestamp extends Timestamp {
     }
 
-    class Type {
-      private String type = ValueType.STRING.toString();
-      private final String index = indexNotAnalyzed;
-    }
-
     class Status {
       private final String type = ValueType.INTEGER.toString();
     }
@@ -126,7 +114,6 @@ public class EsTagConfigMapping implements EsMapping {
       private final String index = indexNotAnalyzed;
     }
 
-    //c2mon goes here
     class C2monMetadata {
       private final String dynamic = "false";
       private final String type = ValueType.OBJECT.toString();

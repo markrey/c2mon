@@ -41,7 +41,7 @@ public class EsTagConfig {
 
   protected long id;
   protected String name;
-  protected final Map<String, String> metadata = new HashMap<>();
+  protected Map<String, String> metadata = new HashMap<>();
 
   private final EsTagC2monInfo c2mon;
 
@@ -50,9 +50,11 @@ public class EsTagConfig {
     this.c2mon = new EsTagC2monInfo("String");
   }
 
-  public EsTagConfig(Long id, String dataType) {
+  public EsTagConfig(Long id, String name, String dataType, Map<String, String> metadata) {
     this.id = id;
+    this.name = name;
     this.c2mon = new EsTagC2monInfo(dataType);
+    this.metadata = metadata;
   }
 
   @Override

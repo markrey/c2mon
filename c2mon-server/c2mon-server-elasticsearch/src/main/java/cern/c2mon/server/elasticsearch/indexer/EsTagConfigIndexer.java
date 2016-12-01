@@ -17,22 +17,18 @@
 
 package cern.c2mon.server.elasticsearch.indexer;
 
-import java.util.Collection;
-import java.util.List;
-
 import javax.annotation.PostConstruct;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
-import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
 import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
 import cern.c2mon.server.elasticsearch.connector.TransportConnector;
+import cern.c2mon.server.elasticsearch.structure.mappings.EsTagConfigMapping;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 
 /**
@@ -40,7 +36,7 @@ import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
  */
 @Slf4j
 @Component
-public class EsTagConfigIndexer<T extends EsTagConfig> {
+public class EsTagConfigIndexer {
 
   @Autowired
   @Setter
@@ -56,91 +52,22 @@ public class EsTagConfigIndexer<T extends EsTagConfig> {
   }
 
   @PostConstruct
-  public void init() throws IDBPersistenceException {
-    connector.createIndex(properties.getIndexTagConfig());
+  public void init() {
+    connector.createIndex(properties.getTagConfigIndex());
+    connector.createIndexTypeMapping(properties.getTagConfigIndex(), "tag_config",
+            new EsTagConfigMapping().getMapping());
   }
 
-  public void storeData(T object) throws IDBPersistenceException {
-    if (object == null) {
-      return;
-    }
+  public void indexTagConfig(EsTagConfig tag) {
+    IndexRequest indexNewTag = new IndexRequest(properties.getTagConfigIndex(), "tag_config",
+            String.valueOf(tag.getId())).source(tag.toString());
 
-    boolean logged = false;
     try {
-      logged = indexTagConfig(object);
+      IndexResponse indexResponse = connector.getClient().index(indexNewTag).get();
+      indexResponse.isCreated();
     }
     catch (Exception e) {
-      throw new IDBPersistenceException(e);
+      log.error("Error occurred while indexing the config for tag #{}", tag.getId(), e);
     }
-  }
-
-  protected boolean indexTagConfig(EsTagConfig tag) {
-    String type = generateTagType(tag.getC2mon().getDataType());
-
-    log.trace("Indexing a new tag (#{}) with type={}", tag.getId(), type);
-
-    if (type == null /*|| !checkIndex(index)*/) {
-      log.warn("Error while indexing tag #{}. Bad index {}  -> Tag will not be sent to elasticsearch!",
-              tag.getId(), properties.getIndexTagConfig());
-      return false;
-    }
-
-    String tagJson = tag.toString();
-    log.debug("sendTagToBatch() - New 'IndexRequest' for index {} and source {}", properties.getIndexTagConfig(), tagJson);
-    IndexRequest indexNewTag = new IndexRequest(properties.getIndexTagConfig(), type, String.valueOf(tag.getId())).source(tagJson);
-    return connector.logTagConfig(properties.getIndexTagConfig(), indexNewTag);
-  }
-
-  public void storeData(List<T> data) throws IDBPersistenceException {
-    if (data == null) {
-      return;
-    }
-
-    try {
-      log.debug("storeData() - Try to send data by batch of size " + data.size());
-
-      this.indexTags(data);
-    }
-    catch (ElasticsearchException e) {
-      throw new IDBPersistenceException(e);
-    } finally {
-
-    }
-  }
-
-  public synchronized void indexTags(Collection<T> tags) throws IDBPersistenceException {
-    if (tags == null) {
-      return;
-    }
-
-    log.debug("indexTags() - Received a collection of " + tags.size() + " EsTagConfig tags to send by batch.");
-
-    if (CollectionUtils.isEmpty(tags)) {
-      return;
-    }
-
-    for (EsTagConfig tagConfig : tags) {
-      if (indexTagConfig(tagConfig)) {
-        log.debug(tagConfig.toString());
-      }
-    }
-
-    connector.getBulkProcessor().flush();
-
-    connector.refreshIndices();
-  }
-
-  private String generateTagType(String dataType) {
-    return "type_" + getSimpleTypeName(dataType);
-  }
-
-  public static String getSimpleTypeName(String dataType) {
-    String type = dataType.toLowerCase();
-
-    if (dataType.contains(".")) {
-      type = type.substring(type.lastIndexOf('.') + 1);
-    }
-
-    return type;
   }
 }

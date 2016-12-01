@@ -454,24 +454,6 @@ public class TransportConnector {
     return false;
   }
 
-  public boolean logTagConfig(String indexName, IndexRequest indexRequest) {
-    if (client == null) {
-      log.error("Elasticsearch connection not (yet) initialized.");
-      return false;
-    }
-
-    log.debug("Try to write new TagConfig to in index = {}", indexName);
-
-    try {
-      IndexResponse indexResponse = client.index(indexRequest).get();
-      return indexResponse.isCreated();
-    } catch (Exception e) {
-      log.error("Error occurred while logging the EsTagConfig for index={}", indexName, e);
-    }
-
-    return false;
-  }
-
   /**
    * Simple query to get all the indices in the cluster.
    *

@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Service;
 
-import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
 import cern.c2mon.server.cache.C2monCacheListener;
 import cern.c2mon.server.cache.CacheRegistrationService;
 import cern.c2mon.server.common.component.Lifecycle;
@@ -47,7 +46,7 @@ public class EsTagConfigListener implements C2monCacheListener<Tag>, SmartLifecy
    */
   private final CacheRegistrationService cacheRegistrationService;
 
-  EsTagConfigIndexer<EsTagConfig> esTagConfigIndexer;
+  EsTagConfigIndexer esTagConfigIndexer;
 
   EsTagConfigConverter esTagConfigConverter;
 
@@ -62,7 +61,7 @@ public class EsTagConfigListener implements C2monCacheListener<Tag>, SmartLifecy
   private volatile boolean running = false;
 
   @Autowired
-  public EsTagConfigListener(@Qualifier("esTagConfigIndexer") final EsTagConfigIndexer<EsTagConfig> esTagConfigIndexer,
+  public EsTagConfigListener(@Qualifier("esTagConfigIndexer") final EsTagConfigIndexer esTagConfigIndexer,
                              final CacheRegistrationService cacheRegistrationService,
                              final EsTagConfigConverter esTagConfigConverter) {
     this.esTagConfigIndexer = esTagConfigIndexer;
@@ -116,32 +115,17 @@ public class EsTagConfigListener implements C2monCacheListener<Tag>, SmartLifecy
     return ServerConstants.PHASE_STOP_LAST - 1;
   }
 
-  private EsTagConfig convertTagsToEsTags(final Tag tagToLog) {
-    if (tagToLog == null) {
-      return null;
-    }
-
-    return esTagConfigConverter.convert(tagToLog);
-  }
-
   @Override
-  public void notifyElementUpdated(Tag cacheable) {
-    if (cacheable == null) {
-      log.warn("Received a null");
+  public void notifyElementUpdated(Tag tag) {
+    if (tag == null) {
       return;
     }
-    log.info("Received a TagConfig");
 
-    try {
-      esTagConfigIndexer.storeData(convertTagsToEsTags(cacheable));
-    }
-    catch (IDBPersistenceException e) {
-      log.warn("Problem occurred during storing data attempt", e);
-    }
+    esTagConfigIndexer.indexTagConfig(esTagConfigConverter.convert(tag));
   }
 
   @Override
-  public void confirmStatus(Tag cacheable) {
+  public void confirmStatus(Tag tag) {
 
   }
 }

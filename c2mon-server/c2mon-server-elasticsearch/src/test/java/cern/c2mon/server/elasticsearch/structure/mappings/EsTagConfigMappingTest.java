@@ -42,10 +42,6 @@ public class EsTagConfigMappingTest {
           "      \"type\": \"string\",\n" +
           "      \"index\": \"not_analyzed\"\n" +
           "    },\n" +
-          "    \"type\": {\n" +
-          "      \"type\": \"string\",\n" +
-          "      \"index\": \"not_analyzed\"\n" +
-          "    },\n" +
           "    \"unit\": {\n" +
           "      \"type\": \"string\",\n" +
           "      \"index\": \"not_analyzed\"\n" +
@@ -93,10 +89,10 @@ public class EsTagConfigMappingTest {
 
   @Test
   public void testOutput() {
-    EsTagConfigMapping mapping = new EsTagConfigMapping(EsTag.TYPE_STRING, String.class.getName());
+    EsTagConfigMapping mapping = new EsTagConfigMapping();
     assertEquals(expectedMapping, mapping.getMapping());
 
-    EsTagConfigMapping mapping2 = new EsTagConfigMapping(EsTag.TYPE_STRING, "String");
+    EsTagConfigMapping mapping2 = new EsTagConfigMapping();
     assertEquals(expectedMapping, mapping2.getMapping());
   }
 }

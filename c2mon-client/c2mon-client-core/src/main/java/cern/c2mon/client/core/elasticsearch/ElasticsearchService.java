@@ -182,19 +182,10 @@ public class ElasticsearchService {
 
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder
-        .query(prefixQuery("name", query))
-        .size(0)
-        .aggregation(AggregationBuilders.terms("group-by-name")
-            .field("name")
-            .subAggregation(
-                AggregationBuilders.topHits("top")
-                    .setSize(1)
-                    .addSort("timestamp", SortOrder.DESC)
-                    .setFetchSource("id", null)
-            ));
+        .query(prefixQuery("name", query));
 
     SearchResult result;
-    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex("c2mon-tag*").build();
+    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(properties.getElasticsearch().getTagConfigIndex()).build();
 
     try {
       result = client.execute(search);
@@ -202,6 +193,7 @@ public class ElasticsearchService {
       throw new RuntimeException("Error querying top most active tags", e);
     }
 
+    //TODO: Look for hits instead of buckets i.e. findByMetadata
     for (TermsAggregation.Entry bucket : result.getAggregations().getTermsAggregation("group-by-name").getBuckets()) {
       double id = (double) bucket.getTopHitsAggregation("top").getFirstHit(Map.class).source.get("id");
       tagIds.add((long) id);
@@ -224,14 +216,12 @@ public class ElasticsearchService {
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder.query(
         nestedQuery("metadata",
-            boolQuery().must(matchQuery("metadata." + key, value))))
-        .aggregation(AggregationBuilders.terms("group-by-id")
-            .field("id")
-            .size(0)
+            boolQuery().must(matchQuery("metadata." + key, value)))
         );
 
     SearchResult result;
-    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex("c2mon-tag*").build();
+    Search search = new Search.Builder(searchSourceBuilder.toString())
+            .addIndex(properties.getElasticsearch().getTagConfigIndex()).build();
 
     try {
       result = client.execute(search);
@@ -239,9 +229,8 @@ public class ElasticsearchService {
       throw new RuntimeException("Error querying top most active tags", e);
     }
 
-    tagIds.addAll(result.getAggregations().getTermsAggregation("group-by-id").getBuckets()
-        .stream()
-        .map(bucket -> Long.valueOf(bucket.getKey())).collect(Collectors.toList()));
+    tagIds.addAll(result.getHits(Map.class).stream()
+        .map(hit -> Long.valueOf((String) hit.source.get("id"))).collect(Collectors.toList()));
 
     return tagService.get(tagIds);
   }

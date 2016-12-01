@@ -56,5 +56,19 @@ public class C2monClientProperties {
      * URL of the Elasticsearch instance
      */
     private String url = "http://localhost:9200";
+
+    /**
+     * Prefix used for all C2MON indices. The final index format becomes:
+     *
+     * indexPrefix + "-" entity + "_" + bucket
+     *
+     * e.g.: c2mon-tag_2017-01
+     */
+    private String indexPrefix = "c2mon";
+
+    /**
+     * Name of the tag configuration index
+     */
+    private String tagConfigIndex = indexPrefix + "-tag-config";
   }
 }
