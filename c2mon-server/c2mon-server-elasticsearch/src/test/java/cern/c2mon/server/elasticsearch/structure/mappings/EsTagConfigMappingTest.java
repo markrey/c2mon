@@ -34,9 +34,6 @@ import static junit.framework.TestCase.assertEquals;
 public class EsTagConfigMappingTest {
 
   private final String expectedMapping = "{\n" +
-          "  \"_routing\": {\n" +
-          "    \"required\": \"true\"\n" +
-          "  },\n" +
           "  \"properties\": {\n" +
           "    \"id\": {\n" +
           "      \"type\": \"long\"\n" +
