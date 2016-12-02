@@ -17,17 +17,18 @@
 
 package cern.c2mon.server.elasticsearch.indexer;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+
+import javax.security.auth.Refreshable;
 
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -36,7 +37,8 @@ import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
 import cern.c2mon.server.elasticsearch.connector.TransportConnector;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Szymon Halastra
@@ -73,7 +75,7 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
     assertEquals(1, response.getHits().getTotalHits());
 
     Map<String, Object> tagAsMap = response.getHits().getAt(0).sourceAsMap();
-    Long id = new Long((Integer)tagAsMap.get("id"));
+    Long id = new Long((Integer) tagAsMap.get("id"));
     assertTrue(id.equals(esTagConfig.getId()));
   }
 
@@ -107,5 +109,31 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
     Map<String, Object> tagAsMap = response.getHits().getAt(0).sourceAsMap();
 
     assertTrue(tagAsMap.get("metadata").equals(esTagConfig.getMetadata()));
+  }
+
+  @Test
+  public void removeDataTag() {
+    Map<String, String> metadata = new HashMap<>();
+    metadata.put("test", "test");
+    EsTagConfig esTagConfig = new EsTagConfig(1L, "test", Long.class.getSimpleName(), metadata);
+
+    indexer.indexTagConfig(esTagConfig);
+
+    SearchResponse response = connector.getClient().prepareSearch(new String[]{properties.getTagConfigIndex()})
+            .setSearchType(SearchType.DEFAULT).setQuery(QueryBuilders.termQuery("id", 1L))
+            .execute().actionGet();
+
+    assertEquals(1, response.getHits().getTotalHits());
+
+    DeleteResponse deleteResponse = connector.getClient().prepareDelete(properties.getTagConfigIndex(),
+            "tag_config", "1").get();
+
+    assertEquals(true, deleteResponse.isFound());
+
+    response = connector.getClient().prepareSearch(new String[]{properties.getTagConfigIndex()})
+            .setSearchType(SearchType.DEFAULT).setQuery(QueryBuilders.termQuery("id", 1L))
+            .execute().actionGet();
+
+    assertEquals(0, response.getHits().getTotalHits());
   }
 }
