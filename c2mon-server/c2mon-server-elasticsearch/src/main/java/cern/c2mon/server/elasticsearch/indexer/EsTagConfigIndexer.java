@@ -63,8 +63,8 @@ public class EsTagConfigIndexer {
             String.valueOf(tag.getId())).source(tag.toString());
 
     try {
-      IndexResponse indexResponse = connector.getClient().index(indexNewTag).get();
-      indexResponse.isCreated();
+      connector.getClient().index(indexNewTag).get();
+      connector.waitForYellowStatus();
     }
     catch (Exception e) {
       log.error("Error occurred while indexing the config for tag #{}", tag.getId(), e);

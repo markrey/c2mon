@@ -20,6 +20,7 @@ package cern.c2mon.server.elasticsearch.indexer;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.delete.DeleteResponse;
