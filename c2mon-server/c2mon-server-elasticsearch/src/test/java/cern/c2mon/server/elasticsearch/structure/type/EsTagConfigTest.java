@@ -47,34 +47,20 @@ public class EsTagConfigTest {
 
   private String expectedJson;
 
-//  @Before
-//  public void setup() {
-//    DataTagCacheObject tag = CacheObjectCreation.createTestDataTag();
-//
-//    esTagConfig = new EsTagConfig(1L, "String");
-//
-//    esTagConfig.getMetadata().putAll(this.copyMetadata(tag));
-//
-//    expectedJson = gson.toJson(esTagConfig);
-//  }
-//
-//  private Map<String, String> copyMetadata(Tag tag) {
-//    Map<String, String> metadata = new HashMap<>();
-//
-//    if (tag.getMetadata() != null) {
-//      Iterator it = tag.getMetadata().getMetadata().entrySet().iterator();
-//
-//      while (it.hasNext()) {
-//        Map.Entry pair = (Map.Entry) it.next();
-//
-//        metadata.put(pair.getKey().toString(), pair.getValue().toString());
-//      }
-//    }
-//    return metadata;
-//  }
-//
-//  @Test
-//  public void checkJsonConversion() {
-//    assertEquals(expectedJson, esTagConfig.toString());
-//  }
+  @Before
+  public void setup() {
+    DataTagCacheObject tag = CacheObjectCreation.createTestDataTag();
+
+    Map<String, String> metadata = new HashMap<>();
+    metadata.put("test", "test");
+
+    esTagConfig = new EsTagConfig(1L, "test", Long.class.getSimpleName(), metadata);
+
+    expectedJson = gson.toJson(esTagConfig);
+  }
+
+  @Test
+  public void checkJsonConversion() {
+    assertEquals(expectedJson, esTagConfig.toString());
+  }
 }

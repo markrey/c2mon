@@ -17,29 +17,30 @@
 
 package cern.c2mon.server.elasticsearch.indexer;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
-import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.elasticsearch.config.BaseElasticsearchIntegrationTest;
 import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
 import cern.c2mon.server.elasticsearch.connector.TransportConnector;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Szymon Halastra
  */
+@Slf4j
 public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
 
   @Autowired
@@ -71,16 +72,39 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
     assertEquals(1, response.getHits().getTotalHits());
 
     Map<String, Object> tagAsMap = response.getHits().getAt(0).sourceAsMap();
-    assertTrue(tagAsMap.get("id").equals(esTagConfig.getId()));
+    Long id = new Long((Integer)tagAsMap.get("id"));
+    assertTrue(id.equals(esTagConfig.getId()));
   }
 
   @Test
   public void updateDataTag() {
+    Map<String, String> metadata = new HashMap<>();
+    metadata.put("test", "test");
+    EsTagConfig esTagConfig = new EsTagConfig(1L, "test", Long.class.getSimpleName(), metadata);
 
-  }
+    indexer.indexTagConfig(esTagConfig);
 
-  @Test
-  public void removeDataTag() {
+    SearchResponse response = connector.getClient().prepareSearch(new String[]{properties.getTagConfigIndex()})
+            .setSearchType(SearchType.DEFAULT).setQuery(QueryBuilders.termQuery("id", 1L))
+            .execute().actionGet();
 
+    assertEquals(1, response.getHits().getTotalHits());
+
+    Map<String, String> updatedMetadata = new HashMap();
+    updatedMetadata.put("test", "updated-test");
+
+    esTagConfig.setMetadata(updatedMetadata);
+
+    indexer.indexTagConfig(esTagConfig);
+
+    response = connector.getClient().prepareSearch(new String[]{properties.getTagConfigIndex()})
+            .setSearchType(SearchType.DEFAULT).setQuery(QueryBuilders.termQuery("id", 1L))
+            .execute().actionGet();
+
+    assertEquals(1, response.getHits().getTotalHits());
+
+    Map<String, Object> tagAsMap = response.getHits().getAt(0).sourceAsMap();
+
+    assertTrue(tagAsMap.get("metadata").equals(esTagConfig.getMetadata()));
   }
 }
