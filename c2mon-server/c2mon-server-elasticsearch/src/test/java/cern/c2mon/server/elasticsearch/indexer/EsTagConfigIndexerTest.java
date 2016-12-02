@@ -68,6 +68,7 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
 
     indexer.indexTagConfig(esTagConfig);
 
+    RefreshResponse refreshResponse = connector.getClient().admin().indices().prepareRefresh().get();
     SearchResponse response = connector.getClient().prepareSearch(new String[]{properties.getTagConfigIndex()})
             .setSearchType(SearchType.DEFAULT).setQuery(QueryBuilders.termQuery("id", 1L))
             .execute().actionGet();
@@ -87,6 +88,7 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
 
     indexer.indexTagConfig(esTagConfig);
 
+    RefreshResponse refreshResponse = connector.getClient().admin().indices().prepareRefresh().get();
     SearchResponse response = connector.getClient().prepareSearch(new String[]{properties.getTagConfigIndex()})
             .setSearchType(SearchType.DEFAULT).setQuery(QueryBuilders.termQuery("id", 1L))
             .execute().actionGet();
@@ -100,6 +102,7 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
 
     indexer.indexTagConfig(esTagConfig);
 
+    refreshResponse = connector.getClient().admin().indices().prepareRefresh().get();
     response = connector.getClient().prepareSearch(new String[]{properties.getTagConfigIndex()})
             .setSearchType(SearchType.DEFAULT).setQuery(QueryBuilders.termQuery("id", 1L))
             .execute().actionGet();
@@ -119,6 +122,7 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
 
     indexer.indexTagConfig(esTagConfig);
 
+    RefreshResponse refreshResponse = connector.getClient().admin().indices().prepareRefresh().get();
     SearchResponse response = connector.getClient().prepareSearch(new String[]{properties.getTagConfigIndex()})
             .setSearchType(SearchType.DEFAULT).setQuery(QueryBuilders.termQuery("id", 1L))
             .execute().actionGet();
@@ -130,6 +134,7 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
 
     assertEquals(true, deleteResponse.isFound());
 
+    refreshResponse = connector.getClient().admin().indices().prepareRefresh().get();
     response = connector.getClient().prepareSearch(new String[]{properties.getTagConfigIndex()})
             .setSearchType(SearchType.DEFAULT).setQuery(QueryBuilders.termQuery("id", 1L))
             .execute().actionGet();
