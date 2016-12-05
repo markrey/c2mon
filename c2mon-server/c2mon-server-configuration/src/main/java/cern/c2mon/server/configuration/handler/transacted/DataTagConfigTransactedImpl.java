@@ -20,26 +20,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 
-import javax.naming.ConfigurationException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jmx.export.annotation.ManagedOperation;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import cern.c2mon.server.cache.DataTagCache;
-import cern.c2mon.server.cache.DataTagFacade;
-import cern.c2mon.server.cache.EquipmentFacade;
-import cern.c2mon.server.cache.SubEquipmentFacade;
-import cern.c2mon.server.cache.TagLocationService;
+import cern.c2mon.server.cache.*;
 import cern.c2mon.server.cache.exception.CacheElementNotFoundException;
 import cern.c2mon.server.cache.loading.DataTagLoaderDAO;
 import cern.c2mon.server.common.datatag.DataTag;
+import cern.c2mon.server.common.listener.ConfigurationEventListener;
 import cern.c2mon.server.configuration.handler.AlarmConfigHandler;
 import cern.c2mon.server.configuration.handler.RuleTagConfigHandler;
 import cern.c2mon.server.configuration.impl.ProcessChange;
@@ -87,6 +82,7 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
   @Autowired
   private AlarmConfigHandler alarmConfigHandler;
 
+  private Collection<ConfigurationEventListener> listeners = new ArrayList<>();
   /**
    * Autowired constructor.
    * @param dataTagFacade      reference to facade bean
@@ -97,11 +93,16 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
    */
   @Autowired
   public DataTagConfigTransactedImpl(final DataTagFacade dataTagFacade,
-                                     final DataTagLoaderDAO dataTagLoaderDAO, final DataTagCache dataTagCache,
-                                     final EquipmentFacade equipmentFacade, SubEquipmentFacade subEquipmentFacade, final TagLocationService tagLocationService) {
+                                     final DataTagLoaderDAO dataTagLoaderDAO,
+                                     final DataTagCache dataTagCache,
+                                     final EquipmentFacade equipmentFacade,
+                                     final SubEquipmentFacade subEquipmentFacade,
+                                     final TagLocationService tagLocationService,
+                                     final GenericApplicationContext context) {
     super(dataTagLoaderDAO, dataTagFacade, dataTagCache, tagLocationService);
     this.equipmentFacade = equipmentFacade;
     this.subEquipmentFacade = subEquipmentFacade;
+    this.listeners = context.getBeansOfType(ConfigurationEventListener.class).values();
   }
 
   /**
@@ -132,6 +133,10 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
       try {
         tagCache.putQuiet(dataTag);
 
+        for (ConfigurationEventListener listener : listeners) {
+          listener.onConfigurationEvent(dataTag, Action.CREATE);
+        }
+
         if (dataTag.getEquipmentId() != null) {
           DataTagAdd dataTagAdd = new DataTagAdd(element.getSequenceId(), dataTag.getEquipmentId(),
               ((DataTagFacade) commonTagFacade).generateSourceDataTag(dataTag));
@@ -146,7 +151,6 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
         }
 
         throw new IllegalArgumentException("No (sub)equipment id set in datatag (" + dataTag.getId() + ") configuration.");
-
 
       } catch (Exception ex) {
         LOGGER.error("Exception caught when attempting to create a DataTag - rolling back the DB transaction and undoing cache changes.");
@@ -192,6 +196,11 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
 
       configurableDAO.updateConfig(dataTagCopy);
       tagCache.putQuiet(dataTagCopy);
+
+      for (ConfigurationEventListener listener : listeners) {
+        listener.onConfigurationEvent(dataTagCopy, Action.UPDATE);
+      }
+
       if (((DataTagUpdate) dataTagUpdate).isEmpty()) {
         return new ProcessChange();
       } else {
@@ -240,6 +249,11 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
             alarmConfigHandler.removeAlarm(alarmId, alarmReport);
           }
         }
+
+        for (ConfigurationEventListener listener : listeners) {
+          listener.onConfigurationEvent(tagCopy, Action.REMOVE);
+        }
+
         configurableDAO.deleteItem(tagCopy.getId());
       } catch (Exception ex) {
         //commonTagFacade.setStatus(dataTag, Status.RECONFIGURATION_ERROR);

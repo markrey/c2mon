@@ -100,7 +100,7 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
 
     esTagConfig.setMetadata(updatedMetadata);
 
-    indexer.indexTagConfig(esTagConfig);
+    indexer.updateTagConfig(esTagConfig);
 
     refreshResponse = connector.getClient().admin().indices().prepareRefresh().get();
     response = connector.getClient().prepareSearch(new String[]{properties.getTagConfigIndex()})
@@ -129,10 +129,7 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
 
     assertEquals(1, response.getHits().getTotalHits());
 
-    DeleteResponse deleteResponse = connector.getClient().prepareDelete(properties.getTagConfigIndex(),
-            "tag_config", "1").get();
-
-    assertEquals(true, deleteResponse.isFound());
+    indexer.removeTagConfig(esTagConfig);
 
     refreshResponse = connector.getClient().admin().indices().prepareRefresh().get();
     response = connector.getClient().prepareSearch(new String[]{properties.getTagConfigIndex()})

@@ -21,8 +21,9 @@ import javax.annotation.PostConstruct;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -68,6 +69,32 @@ public class EsTagConfigIndexer {
     }
     catch (Exception e) {
       log.error("Error occurred while indexing the config for tag #{}", tag.getId(), e);
+    }
+  }
+
+  public void updateTagConfig(EsTagConfig tag) {
+    UpdateRequest updateRequest = new UpdateRequest(properties.getTagConfigIndex(), "tag_config",
+            String.valueOf(tag.getId())).doc(tag.toString());
+
+    try {
+      connector.getClient().update(updateRequest).get();
+      connector.waitForYellowStatus();
+    }
+    catch (Exception e) {
+      log.error("Error occurred while updating the config for tag #{}", tag.getId(), e);
+    }
+  }
+
+  public void removeTagConfig(EsTagConfig tag) {
+    DeleteRequest deleteRequest = new DeleteRequest(properties.getTagConfigIndex(), "tag_config",
+            String.valueOf(tag.getId()));
+
+    try {
+      connector.getClient().delete(deleteRequest).get();
+      connector.waitForYellowStatus();
+    }
+    catch (Exception e) {
+      log.error("Error occurred while deleting the config for tag #{}", tag.getId(), e);
     }
   }
 }

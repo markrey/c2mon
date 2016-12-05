@@ -26,6 +26,7 @@ import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.context.support.GenericApplicationContext;
 
 import cern.c2mon.server.cache.DataTagCache;
 import cern.c2mon.server.cache.DataTagFacade;
@@ -63,6 +64,7 @@ public class DataTagConfigTransactedImplTest {
   private DataTagFacade dataTagFacade;
   private DataTagCache dataTagCache;
   private TagLocationService tagLocationService;
+  private GenericApplicationContext context;
 
   @Before
   public void setUp() {
@@ -75,8 +77,9 @@ public class DataTagConfigTransactedImplTest {
     dataTagFacade = control.createMock(DataTagFacade.class);
     dataTagCache = control.createMock(DataTagCache.class);
     tagLocationService = control.createMock(TagLocationService.class);
-    dataTagConfigTransacted = new DataTagConfigTransactedImpl(dataTagFacade, dataTagLoaderDAO, dataTagCache, equipmentFacade, subEquipmentFacade,
-        tagLocationService);
+    context = control.createMock(GenericApplicationContext.class);
+    dataTagConfigTransacted = new DataTagConfigTransactedImpl(dataTagFacade, dataTagLoaderDAO, dataTagCache,
+            equipmentFacade, subEquipmentFacade, tagLocationService, context);
   }
 
   @Test

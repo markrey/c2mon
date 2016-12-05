@@ -17,9 +17,6 @@
 
 package cern.c2mon.server.elasticsearch.listener;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,6 +30,7 @@ import cern.c2mon.server.elasticsearch.indexer.EsTagConfigIndexer;
 import cern.c2mon.server.elasticsearch.structure.converter.EsTagConfigConverter;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 import cern.c2mon.server.test.CacheObjectCreation;
+import cern.c2mon.shared.client.configuration.ConfigConstants.Action;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
@@ -63,7 +61,7 @@ public class EsTagConfigListenerTest {
 
   @Test
   public void testEsTagConfigSentToIndexer() throws IDBPersistenceException {
-    esTagConfigListener.notifyElementUpdated(tag);
+    esTagConfigListener.onConfigurationEvent(tag, Action.CREATE);
     verify(esTagConfigConverter).convert(eq(tag));
   }
 }

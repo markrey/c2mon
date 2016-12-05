@@ -17,115 +17,55 @@
 
 package cern.c2mon.server.elasticsearch.listener;
 
-import javax.annotation.PostConstruct;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.SmartLifecycle;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-import cern.c2mon.server.cache.C2monCacheListener;
-import cern.c2mon.server.cache.CacheRegistrationService;
-import cern.c2mon.server.common.component.Lifecycle;
-import cern.c2mon.server.common.config.ServerConstants;
+import cern.c2mon.server.common.listener.ConfigurationEventListener;
 import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.elasticsearch.indexer.EsTagConfigIndexer;
 import cern.c2mon.server.elasticsearch.structure.converter.EsTagConfigConverter;
-import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
+import cern.c2mon.shared.client.configuration.ConfigConstants.Action;
 
 /**
  * @author Szymon Halastra
  */
 @Slf4j
-@Service
-public class EsTagConfigListener implements C2monCacheListener<Tag>, SmartLifecycle {
+@Component
+public class EsTagConfigListener implements ConfigurationEventListener {
 
-  /**
-   * Reference to registration service.
-   */
-  private final CacheRegistrationService cacheRegistrationService;
+  private final EsTagConfigIndexer esTagConfigIndexer;
 
-  EsTagConfigIndexer esTagConfigIndexer;
-
-  EsTagConfigConverter esTagConfigConverter;
-
-  /**
-   * Listener container lifecycle hook.
-   */
-  private Lifecycle listenerContainer;
-
-  /**
-   * Lifecycle flag.
-   */
-  private volatile boolean running = false;
+  private final EsTagConfigConverter esTagConfigConverter;
 
   @Autowired
-  public EsTagConfigListener(@Qualifier("esTagConfigIndexer") final EsTagConfigIndexer esTagConfigIndexer,
-                             final CacheRegistrationService cacheRegistrationService,
+  public EsTagConfigListener(final EsTagConfigIndexer esTagConfigIndexer,
                              final EsTagConfigConverter esTagConfigConverter) {
     this.esTagConfigIndexer = esTagConfigIndexer;
-    this.cacheRegistrationService = cacheRegistrationService;
     this.esTagConfigConverter = esTagConfigConverter;
-
-    log.info("ESTagConfigListener is running");
-  }
-
-  /**
-   * Registers to be notified of all Tag updates (data, rule and control tags).
-   */
-  @PostConstruct
-  public void init() {
-    listenerContainer = cacheRegistrationService.registerToAllTags(this);
   }
 
   @Override
-  public boolean isAutoStartup() {
-    return false;
-  }
+  public void onConfigurationEvent(Tag tag, Action action) {
+    try {
 
-  @Override
-  public void stop(Runnable runnable) {
-    log.debug("Stopping TagConfig logger (elasticsearch)");
-    listenerContainer.stop();
-    running = false;
-  }
+      switch (action) {
+        case CREATE:
+          esTagConfigIndexer.indexTagConfig(esTagConfigConverter.convert(tag));
+          break;
+        case UPDATE:
+          esTagConfigIndexer.updateTagConfig(esTagConfigConverter.convert(tag));
+          break;
+        case REMOVE:
+          esTagConfigIndexer.removeTagConfig(esTagConfigConverter.convert(tag));
+          break;
+        default:
+          break;
+      }
 
-  @Override
-  public void start() {
-    log.debug("Starting TagConfig logger (elasticsearch)");
-    running = true;
-    listenerContainer.start();
-  }
-
-  @Override
-  public void stop() {
-    log.debug("Stopping TagConfig logger (elasticsearch)");
-    listenerContainer.stop();
-    running = false;
-  }
-
-  @Override
-  public boolean isRunning() {
-    return running;
-  }
-
-  @Override
-  public int getPhase() {
-    return ServerConstants.PHASE_STOP_LAST - 1;
-  }
-
-  @Override
-  public void notifyElementUpdated(Tag tag) {
-    if (tag == null) {
-      return;
     }
-
-    esTagConfigIndexer.indexTagConfig(esTagConfigConverter.convert(tag));
-  }
-
-  @Override
-  public void confirmStatus(Tag tag) {
-
+    catch (Exception e) {
+      throw new RuntimeException("Error indexing tag configuration", e);
+    }
   }
 }
