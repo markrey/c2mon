@@ -36,7 +36,7 @@ import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
  * @author Szymon Halastra
  */
 @Slf4j
-@Component(value = "esTagConfigIndexer")
+@Component
 public class EsTagConfigIndexer {
 
   @Autowired
@@ -54,6 +54,7 @@ public class EsTagConfigIndexer {
 
   @PostConstruct
   public void init() {
+    connector.waitForYellowStatus();
     connector.createIndex(properties.getTagConfigIndex());
     connector.createIndexTypeMapping(properties.getTagConfigIndex(), "tag_config",
             new EsTagConfigMapping().getMapping());

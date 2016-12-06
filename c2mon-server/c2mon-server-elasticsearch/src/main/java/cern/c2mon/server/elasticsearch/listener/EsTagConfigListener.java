@@ -40,7 +40,7 @@ public class EsTagConfigListener implements ConfigurationEventListener {
   private final EsTagConfigConverter esTagConfigConverter;
 
   @Autowired
-  public EsTagConfigListener(@Qualifier("esTagConfigIndexer") final EsTagConfigIndexer esTagConfigIndexer,
+  public EsTagConfigListener(final EsTagConfigIndexer esTagConfigIndexer,
                              final EsTagConfigConverter esTagConfigConverter) {
     this.esTagConfigIndexer = esTagConfigIndexer;
     this.esTagConfigConverter = esTagConfigConverter;
