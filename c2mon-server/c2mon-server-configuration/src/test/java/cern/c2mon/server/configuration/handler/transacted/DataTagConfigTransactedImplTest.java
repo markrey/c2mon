@@ -24,9 +24,14 @@ import java.util.Properties;
 
 import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
+import org.easymock.Mock;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import cern.c2mon.server.cache.DataTagCache;
 import cern.c2mon.server.cache.DataTagFacade;
@@ -48,6 +53,8 @@ import cern.c2mon.shared.daq.config.DataTagUpdate;
  * @author Mark Brightwell
  *
  */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes = GenericApplicationContext.class)
 public class DataTagConfigTransactedImplTest {
 
   IMocksControl control;
@@ -64,6 +71,8 @@ public class DataTagConfigTransactedImplTest {
   private DataTagFacade dataTagFacade;
   private DataTagCache dataTagCache;
   private TagLocationService tagLocationService;
+
+  @Autowired
   private GenericApplicationContext context;
 
   @Before
@@ -77,7 +86,7 @@ public class DataTagConfigTransactedImplTest {
     dataTagFacade = control.createMock(DataTagFacade.class);
     dataTagCache = control.createMock(DataTagCache.class);
     tagLocationService = control.createMock(TagLocationService.class);
-    context = control.createMock(GenericApplicationContext.class);
+
     dataTagConfigTransacted = new DataTagConfigTransactedImpl(dataTagFacade, dataTagLoaderDAO, dataTagCache,
             equipmentFacade, subEquipmentFacade, tagLocationService, context);
   }
