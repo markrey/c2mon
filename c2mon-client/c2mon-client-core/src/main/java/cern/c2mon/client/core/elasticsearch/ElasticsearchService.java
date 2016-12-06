@@ -1,8 +1,11 @@
 package cern.c2mon.client.core.elasticsearch;
 
-import cern.c2mon.client.common.tag.Tag;
-import cern.c2mon.client.core.TagService;
-import cern.c2mon.client.core.config.C2monClientProperties;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.annotation.PostConstruct;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.searchbox.client.JestClient;
@@ -20,16 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.SortOrder;
-import org.joda.time.DateTimeConstants;
-import org.joda.time.Days;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import cern.c2mon.client.core.config.C2monClientProperties;
 
 import static org.elasticsearch.index.query.QueryBuilders.*;
 
@@ -41,9 +38,6 @@ import static org.elasticsearch.index.query.QueryBuilders.*;
 public class ElasticsearchService {
 
   private JestClient client;
-
-  @Autowired
-  private TagService tagService;
 
   @Autowired
   private C2monClientProperties properties;
@@ -144,9 +138,9 @@ public class ElasticsearchService {
    *
    * @param size the number of top tags to retrieve
    *
-   * @return a list of {@link Tag} instances
+   * @return a list of tag ids
    */
-  public List<Tag> getTopTags(Integer size) {
+  public List<Long> getTopTags(Integer size) {
     List<Long> tagIds = new ArrayList<>();
 
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -167,7 +161,7 @@ public class ElasticsearchService {
         .stream()
         .map(bucket -> Long.valueOf(bucket.getKey())).collect(Collectors.toList()));
 
-    return (List<Tag>) tagService.get(tagIds);
+    return tagIds;
   }
 
   /**
@@ -177,7 +171,7 @@ public class ElasticsearchService {
    *
    * @return a list of tags whose names match the given prefix
    */
-  public Collection<Tag> findByName(String query) {
+  public Collection<Long> findByName(String query) {
     List<Long> tagIds = new ArrayList<>();
 
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -199,7 +193,7 @@ public class ElasticsearchService {
       tagIds.add((long) id);
     }
 
-    return tagService.get(tagIds);
+    return tagIds;
   }
 
   /**
@@ -210,7 +204,7 @@ public class ElasticsearchService {
    *
    * @return a list of tags containing the exact metadata requested
    */
-  public Collection<Tag> findByMetadata(String key, String value) {
+  public Collection<Long> findByMetadata(String key, String value) {
     List<Long> tagIds = new ArrayList<>();
 
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -232,7 +226,7 @@ public class ElasticsearchService {
     tagIds.addAll(result.getHits(Map.class).stream()
         .map(hit -> Long.valueOf((String) hit.source.get("id"))).collect(Collectors.toList()));
 
-    return tagService.get(tagIds);
+    return tagIds;
   }
 
   /**

@@ -49,7 +49,6 @@ public class EsTagConfigListener implements ConfigurationEventListener {
   @Override
   public void onConfigurationEvent(Tag tag, Action action) {
     try {
-
       switch (action) {
         case CREATE:
           esTagConfigIndexer.indexTagConfig(esTagConfigConverter.convert(tag));
@@ -63,7 +62,6 @@ public class EsTagConfigListener implements ConfigurationEventListener {
         default:
           break;
       }
-
     }
     catch (Exception e) {
       throw new RuntimeException("Error indexing tag configuration", e);

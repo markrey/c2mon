@@ -82,7 +82,8 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
   @Autowired
   private AlarmConfigHandler alarmConfigHandler;
 
-  private Collection<ConfigurationEventListener> configurationEventListeners;
+  private final Collection<ConfigurationEventListener> configurationEventListeners;
+
   /**
    * Autowired constructor.
    * @param dataTagFacade      reference to facade bean
@@ -131,11 +132,12 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
         throw new UnexpectedRollbackException("Unexpected exception while creating a DataTag: rolling back the change", e);
       }
       try {
-        tagCache.putQuiet(dataTag);
 
         for (ConfigurationEventListener listener : configurationEventListeners) {
           listener.onConfigurationEvent(dataTag, Action.CREATE);
         }
+
+        tagCache.putQuiet(dataTag);
 
         if (dataTag.getEquipmentId() != null) {
           DataTagAdd dataTagAdd = new DataTagAdd(element.getSequenceId(), dataTag.getEquipmentId(),
@@ -195,11 +197,12 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
       dataTagUpdate = commonTagFacade.updateConfig(dataTagCopy, properties);
 
       configurableDAO.updateConfig(dataTagCopy);
-      tagCache.putQuiet(dataTagCopy);
 
       for (ConfigurationEventListener listener : configurationEventListeners) {
         listener.onConfigurationEvent(dataTagCopy, Action.UPDATE);
       }
+
+      tagCache.putQuiet(dataTagCopy);
 
       if (((DataTagUpdate) dataTagUpdate).isEmpty()) {
         return new ProcessChange();
