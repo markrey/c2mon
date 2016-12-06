@@ -39,6 +39,7 @@ import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 @Component
 public class EsTagConfigIndexer {
 
+  private static final String TYPE = "tag_config";
   @Autowired
   @Setter
   private ElasticsearchProperties properties;
@@ -54,14 +55,13 @@ public class EsTagConfigIndexer {
 
   @PostConstruct
   public void init() {
-    connector.waitForYellowStatus();
     connector.createIndex(properties.getTagConfigIndex());
-    connector.createIndexTypeMapping(properties.getTagConfigIndex(), "tag_config",
+    connector.createIndexTypeMapping(properties.getTagConfigIndex(), TYPE,
             new EsTagConfigMapping().getMapping());
   }
 
   public void indexTagConfig(EsTagConfig tag) {
-    IndexRequest indexNewTag = new IndexRequest(properties.getTagConfigIndex(), "tag_config",
+    IndexRequest indexNewTag = new IndexRequest(properties.getTagConfigIndex(), TYPE,
             String.valueOf(tag.getId())).source(tag.toString());
 
     try {
@@ -74,7 +74,7 @@ public class EsTagConfigIndexer {
   }
 
   public void updateTagConfig(EsTagConfig tag) {
-    UpdateRequest updateRequest = new UpdateRequest(properties.getTagConfigIndex(), "tag_config",
+    UpdateRequest updateRequest = new UpdateRequest(properties.getTagConfigIndex(), TYPE,
             String.valueOf(tag.getId())).doc(tag.toString());
 
     try {
@@ -87,7 +87,7 @@ public class EsTagConfigIndexer {
   }
 
   public void removeTagConfig(EsTagConfig tag) {
-    DeleteRequest deleteRequest = new DeleteRequest(properties.getTagConfigIndex(), "tag_config",
+    DeleteRequest deleteRequest = new DeleteRequest(properties.getTagConfigIndex(), TYPE,
             String.valueOf(tag.getId()));
 
     try {

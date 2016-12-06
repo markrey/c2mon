@@ -82,7 +82,7 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
   @Autowired
   private AlarmConfigHandler alarmConfigHandler;
 
-  private Collection<ConfigurationEventListener> listeners = new ArrayList<>();
+  private Collection<ConfigurationEventListener> configurationEventListeners;
   /**
    * Autowired constructor.
    * @param dataTagFacade      reference to facade bean
@@ -102,7 +102,7 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
     super(dataTagLoaderDAO, dataTagFacade, dataTagCache, tagLocationService);
     this.equipmentFacade = equipmentFacade;
     this.subEquipmentFacade = subEquipmentFacade;
-    this.listeners = context.getBeansOfType(ConfigurationEventListener.class).values();
+    this.configurationEventListeners = context.getBeansOfType(ConfigurationEventListener.class).values();
   }
 
   /**
@@ -133,7 +133,7 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
       try {
         tagCache.putQuiet(dataTag);
 
-        for (ConfigurationEventListener listener : listeners) {
+        for (ConfigurationEventListener listener : configurationEventListeners) {
           listener.onConfigurationEvent(dataTag, Action.CREATE);
         }
 
@@ -197,7 +197,7 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
       configurableDAO.updateConfig(dataTagCopy);
       tagCache.putQuiet(dataTagCopy);
 
-      for (ConfigurationEventListener listener : listeners) {
+      for (ConfigurationEventListener listener : configurationEventListeners) {
         listener.onConfigurationEvent(dataTagCopy, Action.UPDATE);
       }
 
@@ -250,7 +250,7 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
           }
         }
 
-        for (ConfigurationEventListener listener : listeners) {
+        for (ConfigurationEventListener listener : configurationEventListeners) {
           listener.onConfigurationEvent(tagCopy, Action.REMOVE);
         }
 
