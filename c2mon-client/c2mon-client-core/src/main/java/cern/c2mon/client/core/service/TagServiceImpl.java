@@ -69,8 +69,6 @@ public class TagServiceImpl implements AdvancedTagService {
   /** List of subscribed data tag update listeners */
   private final Set<BaseListener> tagUpdateListeners = new HashSet<>();
 
-  private final ElasticsearchService elasticsearchService;
-
   /**
    * Default Constructor, used by Spring to instantiate the Singleton service
    *
@@ -81,13 +79,11 @@ public class TagServiceImpl implements AdvancedTagService {
   @Autowired
   protected TagServiceImpl(final CoreSupervisionManager supervisionManager,
                            final ClientDataTagCache cache,
-                           final @Qualifier("coreRequestHandler") RequestHandler requestHandler,
-                           final ElasticsearchService elasticsearchService) {
+                           final @Qualifier("coreRequestHandler") RequestHandler requestHandler) {
 
     this.supervisionManager = supervisionManager;
     this.cache = cache;
     this.clientRequestHandler = requestHandler;
-    this.elasticsearchService = elasticsearchService;
   }
 
   @Deprecated
@@ -445,16 +441,16 @@ public class TagServiceImpl implements AdvancedTagService {
 
   @Override
   public Collection<Tag> findByName(String regex) {
-    return elasticsearchService.findByName(regex);
+//    return elasticsearchService.findByName(regex);
 
-//    if (hasWildcard(regex)) {
-//      Set<String> regexList = new HashSet<>();
-//      regexList.add(regex);
-//      return findByName(regexList);
-//    }
-//    else {
-//      return getByName(Arrays.asList(new String[]{regex}));
-//    }
+    if (hasWildcard(regex)) {
+      Set<String> regexList = new HashSet<>();
+      regexList.add(regex);
+      return findByName(regexList);
+    }
+    else {
+      return getByName(Arrays.asList(new String[]{regex}));
+    }
   }
 
   @Override
@@ -493,7 +489,8 @@ public class TagServiceImpl implements AdvancedTagService {
 
   @Override
   public Collection<Tag> findByMetadata(String key, String value) {
-    return elasticsearchService.findByMetadata(key, value);
+    return null;
+//    return elasticsearchService.findByMetadata(key, value);
   }
 
   @Override
