@@ -19,6 +19,7 @@ package cern.c2mon.server.elasticsearch.listener;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import cern.c2mon.server.common.listener.ConfigurationEventListener;
@@ -39,7 +40,7 @@ public class EsTagConfigListener implements ConfigurationEventListener {
   private final EsTagConfigConverter esTagConfigConverter;
 
   @Autowired
-  public EsTagConfigListener(final EsTagConfigIndexer esTagConfigIndexer,
+  public EsTagConfigListener(@Qualifier("esTagConfigIndexer") final EsTagConfigIndexer esTagConfigIndexer,
                              final EsTagConfigConverter esTagConfigConverter) {
     this.esTagConfigIndexer = esTagConfigIndexer;
     this.esTagConfigConverter = esTagConfigConverter;

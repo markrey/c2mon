@@ -36,7 +36,7 @@ import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
  * @author Szymon Halastra
  */
 @Slf4j
-@Component
+@Component(value = "esTagConfigIndexer")
 public class EsTagConfigIndexer {
 
   @Autowired
