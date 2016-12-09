@@ -224,9 +224,8 @@ public class ElasticsearchService {
     }
 
     for(SearchResult.Hit<Map, Void> hit : result.getHits(Map.class)) {
-      StringBuilder builder = new StringBuilder().append(hit.source.get("id"));
-      Long tagId = (long) Double.parseDouble(builder.toString());
-      tagIds.add(tagId);
+      double id = (double) hit.source.get("id");
+      tagIds.add((long) id);
     }
 
     return tagIds;
