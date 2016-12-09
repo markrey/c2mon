@@ -55,6 +55,7 @@ public class EsTagConfigIndexer {
 
   @PostConstruct
   public void init() {
+    connector.waitForYellowStatus();
     connector.createIndex(properties.getTagConfigIndex());
     connector.createIndexTypeMapping(properties.getTagConfigIndex(), TYPE,
             new EsTagConfigMapping().getMapping());

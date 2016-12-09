@@ -179,7 +179,8 @@ public class ElasticsearchService {
         .query(prefixQuery("name", query));
 
     SearchResult result;
-    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(properties.getElasticsearch().getTagConfigIndex()).build();
+    Search search = new Search.Builder(searchSourceBuilder.toString())
+            .addIndex(properties.getElasticsearch().getTagConfigIndex()).build();
 
     try {
       result = client.execute(search);
@@ -187,9 +188,8 @@ public class ElasticsearchService {
       throw new RuntimeException("Error querying top most active tags", e);
     }
 
-    //TODO: Look for hits instead of buckets i.e. findByMetadata
-    for (TermsAggregation.Entry bucket : result.getAggregations().getTermsAggregation("group-by-name").getBuckets()) {
-      double id = (double) bucket.getTopHitsAggregation("top").getFirstHit(Map.class).source.get("id");
+    for(SearchResult.Hit<Map, Void> hit : result.getHits(Map.class)) {
+      double id = (double) hit.source.get("id");
       tagIds.add((long) id);
     }
 
@@ -223,8 +223,11 @@ public class ElasticsearchService {
       throw new RuntimeException("Error querying top most active tags", e);
     }
 
-    tagIds.addAll(result.getHits(Map.class).stream()
-        .map(hit -> Long.valueOf((String) hit.source.get("id"))).collect(Collectors.toList()));
+    for(SearchResult.Hit<Map, Void> hit : result.getHits(Map.class)) {
+      StringBuilder builder = new StringBuilder().append(hit.source.get("id"));
+      Long tagId = (long) Double.parseDouble(builder.toString());
+      tagIds.add(tagId);
+    }
 
     return tagIds;
   }

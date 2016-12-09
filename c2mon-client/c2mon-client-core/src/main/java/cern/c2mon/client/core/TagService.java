@@ -394,11 +394,14 @@ public interface TagService {
    */
   Collection<Tag> findByName(final Set<String> regexList);
 
-  //TODO: write proper comment
+  /**
+   * Returns a list of all tags which match the given key-value pair
+   *
+   * @param key
+   * @param value
+   * @return A collection of all <code>Tag</code> objects
+   */
   Collection<Tag> findByMetadata(String key, String value);
-
-  //TODO: write proper comment
-  Collection<Tag> findByMetadata(Map<String, String> metadata);
 
   /**
    * Returns the total number of subscribed tags in the local cache (cache size).

@@ -446,15 +446,6 @@ public class TagServiceImpl implements AdvancedTagService {
   @Override
   public Collection<Tag> findByName(String regex) {
     return get(elasticsearchService.findByName(regex));
-
-//    if (hasWildcard(regex)) {
-//      Set<String> regexList = new HashSet<>();
-//      regexList.add(regex);
-//      return findByName(regexList);
-//    }
-//    else {
-//      return getByName(Arrays.asList(new String[]{regex}));
-//    }
   }
 
   @Override
@@ -494,17 +485,6 @@ public class TagServiceImpl implements AdvancedTagService {
   @Override
   public Collection<Tag> findByMetadata(String key, String value) {
     return get(elasticsearchService.findByMetadata(key, value));
-  }
-
-  @Override
-  public Collection<Tag> findByMetadata(Map<String, String> metadata) {
-    Collection<Tag> tags = new ArrayList<>();
-
-    for(Map.Entry<String, String> entry : metadata.entrySet()) {
-      tags.addAll(findByMetadata(entry.getKey(), entry.getValue()));
-    }
-
-    return tags;
   }
 
   /**

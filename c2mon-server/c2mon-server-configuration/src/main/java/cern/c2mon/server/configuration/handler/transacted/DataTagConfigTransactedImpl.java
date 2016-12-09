@@ -132,7 +132,6 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
         throw new UnexpectedRollbackException("Unexpected exception while creating a DataTag: rolling back the change", e);
       }
       try {
-
         for (ConfigurationEventListener listener : configurationEventListeners) {
           listener.onConfigurationEvent(dataTag, Action.CREATE);
         }
