@@ -43,7 +43,7 @@ public class EsTagConfig {
   protected String name;
   protected Map<String, String> metadata = new HashMap<>();
 
-  private final EsTagC2monInfo c2mon;
+  private EsTagC2monInfo c2mon;
 
   public EsTagConfig() {
     this.id = -1L;

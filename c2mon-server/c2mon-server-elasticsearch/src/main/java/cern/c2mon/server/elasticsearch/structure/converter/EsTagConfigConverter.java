@@ -22,9 +22,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
+import cern.c2mon.server.cache.EquipmentCache;
+import cern.c2mon.server.cache.ProcessCache;
+import cern.c2mon.server.cache.SubEquipmentCache;
 import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 
@@ -33,22 +37,22 @@ import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
  */
 @Component
 @Slf4j
-public class EsTagConfigConverter implements Converter<Tag, EsTagConfig> {
+public class EsTagConfigConverter extends TagConverter implements Converter<Tag, EsTagConfig> {
+
+  @Autowired
+  public EsTagConfigConverter(final ProcessCache processCache,
+                              final EquipmentCache equipmentCache,
+                              final SubEquipmentCache subEquipmentCache) {
+    super(processCache, equipmentCache, subEquipmentCache);
+  }
 
   @Override
   public EsTagConfig convert(Tag tag) {
     EsTagConfig esTagConfig = new EsTagConfig(tag.getId(), tag.getName(), tag.getDataType(), retrieveTagMetadata(tag));
 
+    esTagConfig.setC2mon(extractC2MonInfo(tag, esTagConfig.getC2mon()));
+    esTagConfig.getMetadata().putAll(retrieveTagProcessMetadata(tag));
+
     return esTagConfig;
-  }
-
-  private Map<String, String> retrieveTagMetadata(Tag tag) {
-    if (tag.getMetadata() == null) {
-      return Collections.emptyMap();
-    }
-
-    Map<String, String> metadata = new HashMap<>();
-    tag.getMetadata().getMetadata().forEach((k, v) -> metadata.put(k, v == null ? null : v.toString()));
-    return metadata;
   }
 }

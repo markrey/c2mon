@@ -77,7 +77,7 @@ public class EsTag implements IFallback {
 
   private long timestamp;
 
-  private final EsTagC2monInfo c2mon;
+  private EsTagC2monInfo c2mon;
 
   private final Map<String, String> metadata = new HashMap<>();
 
