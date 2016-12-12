@@ -17,8 +17,6 @@
 
 package cern.c2mon.server.elasticsearch.structure.converter;
 
-import java.util.HashMap;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,15 +41,13 @@ import static org.mockito.Mockito.when;
 public class EsTagConfigConverterTest {
 
   @InjectMocks
-  EsTagConfigConverter esTagConfigConverter;
+  private EsTagConfigConverter esTagConfigConverter;
 
   @Mock
-  Tag tag;
-
+  private Tag tag;
 
   final long ID = 1L;
   final String NAME = "TAG";
-
   final Metadata METADATA = new Metadata();
 
   @Before
