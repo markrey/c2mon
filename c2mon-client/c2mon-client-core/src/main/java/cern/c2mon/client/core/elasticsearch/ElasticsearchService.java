@@ -185,7 +185,7 @@ public class ElasticsearchService {
     try {
       result = client.execute(search);
     } catch (IOException e) {
-      throw new RuntimeException("Error querying top most active tags", e);
+      throw new RuntimeException("Error querying tags", e);
     }
 
     for(SearchResult.Hit<Map, Void> hit : result.getHits(Map.class)) {
@@ -220,7 +220,7 @@ public class ElasticsearchService {
     try {
       result = client.execute(search);
     } catch (IOException e) {
-      throw new RuntimeException("Error querying top most active tags", e);
+      throw new RuntimeException("Error querying tags", e);
     }
 
     for(SearchResult.Hit<Map, Void> hit : result.getHits(Map.class)) {
