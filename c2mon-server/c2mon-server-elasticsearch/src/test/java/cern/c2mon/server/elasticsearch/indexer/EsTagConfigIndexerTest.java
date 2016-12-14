@@ -17,15 +17,12 @@
 
 package cern.c2mon.server.elasticsearch.indexer;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.security.auth.Refreshable;
-
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -64,7 +61,8 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
   public void addDataTag() {
     Map<String, String> metadata = new HashMap<>();
     metadata.put("test", "test");
-    EsTagConfig esTagConfig = new EsTagConfig(1L, "test", Long.class.getSimpleName(), metadata);
+    EsTagConfig esTagConfig = new EsTagConfig(1L, "test", "test", "dummy",
+            (short) 1, new Date(), Long.class.getSimpleName(), metadata);
 
     indexer.indexTagConfig(esTagConfig);
 
@@ -84,7 +82,8 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
   public void updateDataTag() {
     Map<String, String> metadata = new HashMap<>();
     metadata.put("test", "test");
-    EsTagConfig esTagConfig = new EsTagConfig(1L, "test", Long.class.getSimpleName(), metadata);
+    EsTagConfig esTagConfig = new EsTagConfig(1L, "test", "test", "dummy",
+            (short) 1, new Date(), Long.class.getSimpleName(), metadata);
 
     indexer.indexTagConfig(esTagConfig);
 
@@ -118,7 +117,8 @@ public class EsTagConfigIndexerTest extends BaseElasticsearchIntegrationTest {
   public void removeDataTag() {
     Map<String, String> metadata = new HashMap<>();
     metadata.put("test", "test");
-    EsTagConfig esTagConfig = new EsTagConfig(1L, "test", Long.class.getSimpleName(), metadata);
+    EsTagConfig esTagConfig = new EsTagConfig(1L, "test", "test", "dummy",
+            (short) 1, new Date(), Long.class.getSimpleName(), metadata);
 
     indexer.indexTagConfig(esTagConfig);
 

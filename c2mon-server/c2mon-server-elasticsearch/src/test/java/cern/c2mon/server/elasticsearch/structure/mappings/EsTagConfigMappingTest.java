@@ -22,8 +22,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import cern.c2mon.server.elasticsearch.structure.types.tag.EsTag;
-
 import static junit.framework.TestCase.assertEquals;
 
 /**
@@ -46,14 +44,30 @@ public class EsTagConfigMappingTest {
           "      \"type\": \"string\",\n" +
           "      \"index\": \"not_analyzed\"\n" +
           "    },\n" +
+          "    \"timestamp\": {\n" +
+          "      \"type\": \"date\",\n" +
+          "      \"format\": \"epoch_millis\"\n" +
+          "    },\n" +
+          "    \"description\": {\n" +
+          "      \"type\": \"string\",\n" +
+          "      \"index\": \"not_analyzed\"\n" +
+          "    },\n" +
+          "    \"mode\": {\n" +
+          "      \"type\": \"integer\",\n" +
+          "      \"index\": \"not_analyzed\"\n" +
+          "    },\n" +
+          "    \"maxValue\": {\n" +
+          "      \"type\": \"object\",\n" +
+          "      \"index\": \"not_analyzed\"\n" +
+          "    },\n" +
+          "    \"minValue\": {\n" +
+          "      \"type\": \"object\",\n" +
+          "      \"index\": \"not_analyzed\"\n" +
+          "    },\n" +
           "    \"c2mon\": {\n" +
           "      \"dynamic\": \"false\",\n" +
           "      \"type\": \"object\",\n" +
           "      \"properties\": {\n" +
-          "        \"daqTimestamp\": {\n" +
-          "          \"type\": \"date\",\n" +
-          "          \"format\": \"epoch_millis\"\n" +
-          "        },\n" +
           "        \"process\": {\n" +
           "          \"type\": \"string\",\n" +
           "          \"index\": \"not_analyzed\"\n" +
@@ -62,13 +76,9 @@ public class EsTagConfigMappingTest {
           "          \"type\": \"string\",\n" +
           "          \"index\": \"not_analyzed\"\n" +
           "        },\n" +
-          "        \"serverTimestamp\": {\n" +
-          "          \"type\": \"date\",\n" +
-          "          \"format\": \"epoch_millis\"\n" +
-          "        },\n" +
-          "        \"sourceTimestamp\": {\n" +
-          "          \"type\": \"date\",\n" +
-          "          \"format\": \"epoch_millis\"\n" +
+          "        \"logged\": {\n" +
+          "          \"type\": \"boolean\",\n" +
+          "          \"index\": \"not_analyzed\"\n" +
           "        },\n" +
           "        \"dataType\": {\n" +
           "          \"type\": \"string\",\n" +

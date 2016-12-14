@@ -17,6 +17,9 @@
 
 package cern.c2mon.server.elasticsearch.listener;
 
+import java.util.Date;
+import java.util.HashMap;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,7 +55,8 @@ public class EsTagConfigListenerTest {
   private EsTagConfigIndexer esTagConfigIndexer;
 
   private Tag tag = CacheObjectCreation.createTestDataTag();
-  private EsTagConfig esTagConfig = new EsTagConfig();
+  private EsTagConfig esTagConfig = new EsTagConfig(1L, "tag", "tagload", "dummy",
+          (short) 1, new Date(), Long.class.toString(), new HashMap(){{ put("test", "test");}});
 
   @Before
   public void setup() {

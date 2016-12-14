@@ -36,6 +36,7 @@ import cern.c2mon.server.common.process.Process;
 import cern.c2mon.server.common.subequipment.SubEquipment;
 import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagC2monInfo;
+import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfigC2monInfo;
 
 /**
  * @author Szymon Halastra
@@ -59,45 +60,6 @@ public abstract class TagConverter {
    * Default ID to return if nothing is found in cache.
    */
   protected static final long DEFAULT_ID = -1;
-
-  protected EsTagC2monInfo extractC2MonInfo(final Tag tag, final EsTagC2monInfo c2monInfo) {
-    final Map<String, String> tagProcessMetadata = retrieveTagProcessMetadata(tag);
-
-    c2monInfo.setProcess(tagProcessMetadata.get("process"));
-    c2monInfo.setEquipment(tagProcessMetadata.get("equipment"));
-    c2monInfo.setSubEquipment(tagProcessMetadata.get("subEquipment"));
-
-    setServerTimestamp(tag, c2monInfo);
-    setSourceTimeStamp(tag, c2monInfo);
-    setDaqTimestamp(tag, c2monInfo);
-
-    return c2monInfo;
-  }
-
-
-  private void setServerTimestamp(Tag tag, EsTagC2monInfo c2MonInfo) {
-    Optional.ofNullable(tag.getCacheTimestamp())
-            .map(Timestamp::getTime)
-            .ifPresent(c2MonInfo::setServerTimestamp);
-  }
-
-  private void setSourceTimeStamp(Tag tag, EsTagC2monInfo c2MonInfo) {
-    if (!(tag instanceof DataTag)) {
-      return;
-    }
-    Optional.ofNullable(((DataTag) tag).getSourceTimestamp())
-            .map(Timestamp::getTime)
-            .ifPresent(c2MonInfo::setSourceTimestamp);
-  }
-
-  private void setDaqTimestamp(Tag tag, EsTagC2monInfo c2MonInfo) {
-    if (!(tag instanceof DataTag)) {
-      return;
-    }
-    Optional.ofNullable(((DataTag) tag).getDaqTimestamp())
-            .map(Timestamp::getTime)
-            .ifPresent(c2MonInfo::setDaqTimestamp);
-  }
 
   protected Map<String, String> retrieveTagMetadata(Tag tag) {
     if (tag.getMetadata() == null) {

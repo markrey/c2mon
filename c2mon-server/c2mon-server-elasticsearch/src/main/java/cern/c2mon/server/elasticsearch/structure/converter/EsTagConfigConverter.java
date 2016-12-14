@@ -31,6 +31,8 @@ import cern.c2mon.server.cache.ProcessCache;
 import cern.c2mon.server.cache.SubEquipmentCache;
 import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
+import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfigC2monInfo;
+import cern.c2mon.shared.client.tag.TagMode;
 
 /**
  * @author Szymon Halastra
@@ -48,11 +50,23 @@ public class EsTagConfigConverter extends TagConverter implements Converter<Tag,
 
   @Override
   public EsTagConfig convert(Tag tag) {
-    EsTagConfig esTagConfig = new EsTagConfig(tag.getId(), tag.getName(), tag.getDataType(), retrieveTagMetadata(tag));
+    EsTagConfig esTagConfig = new EsTagConfig(tag.getId(), tag.getName(), tag.getUnit(), tag.getDescription(),
+            tag.getMode(), tag.getTimestamp(), tag.getDataType(), retrieveTagMetadata(tag));
 
     esTagConfig.setC2mon(extractC2MonInfo(tag, esTagConfig.getC2mon()));
     esTagConfig.getMetadata().putAll(retrieveTagProcessMetadata(tag));
 
     return esTagConfig;
   }
+
+  protected EsTagConfigC2monInfo extractC2MonInfo(final Tag tag, final EsTagConfigC2monInfo c2monInfo) {
+    final Map<String, String> tagProcessMetadata = retrieveTagProcessMetadata(tag);
+
+    c2monInfo.setProcess(tagProcessMetadata.get("process"));
+    c2monInfo.setEquipment(tagProcessMetadata.get("equipment"));
+    c2monInfo.setSubEquipment(tagProcessMetadata.get("subEquipment"));
+    c2monInfo.setLogged(tag.isLogged());
+    return c2monInfo;
+  }
+
 }

@@ -16,6 +16,7 @@
  *****************************************************************************/
 package cern.c2mon.server.elasticsearch.structure.converter;
 
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -34,6 +35,7 @@ import cern.c2mon.server.cache.SubEquipmentCache;
 import cern.c2mon.server.common.datatag.DataTag;
 import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.elasticsearch.structure.types.tag.EsTag;
+import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagC2monInfo;
 import cern.c2mon.server.elasticsearch.structure.types.tag.TagQualityAnalysis;
 import cern.c2mon.shared.common.datatag.DataTagQuality;
 import cern.c2mon.shared.common.datatag.TagQualityStatus;
@@ -152,4 +154,43 @@ public class ElasticsearchTagConverter extends TagConverter implements Converter
 
     esTag.setQuality(qualityAnalysis);
   }
+
+  protected EsTagC2monInfo extractC2MonInfo(final Tag tag, final EsTagC2monInfo c2monInfo) {
+    final Map<String, String> tagProcessMetadata = retrieveTagProcessMetadata(tag);
+
+    c2monInfo.setProcess(tagProcessMetadata.get("process"));
+    c2monInfo.setEquipment(tagProcessMetadata.get("equipment"));
+    c2monInfo.setSubEquipment(tagProcessMetadata.get("subEquipment"));
+
+    setServerTimestamp(tag, c2monInfo);
+    setSourceTimeStamp(tag, c2monInfo);
+    setDaqTimestamp(tag, c2monInfo);
+
+    return c2monInfo;
+  }
+
+  private void setServerTimestamp(Tag tag, EsTagC2monInfo c2MonInfo) {
+    Optional.ofNullable(tag.getCacheTimestamp())
+            .map(Timestamp::getTime)
+            .ifPresent(c2MonInfo::setServerTimestamp);
+  }
+
+  private void setSourceTimeStamp(Tag tag, EsTagC2monInfo c2MonInfo) {
+    if (!(tag instanceof DataTag)) {
+      return;
+    }
+    Optional.ofNullable(((DataTag) tag).getSourceTimestamp())
+            .map(Timestamp::getTime)
+            .ifPresent(c2MonInfo::setSourceTimestamp);
+  }
+
+  private void setDaqTimestamp(Tag tag, EsTagC2monInfo c2MonInfo) {
+    if (!(tag instanceof DataTag)) {
+      return;
+    }
+    Optional.ofNullable(((DataTag) tag).getDaqTimestamp())
+            .map(Timestamp::getTime)
+            .ifPresent(c2MonInfo::setDaqTimestamp);
+  }
+
 }

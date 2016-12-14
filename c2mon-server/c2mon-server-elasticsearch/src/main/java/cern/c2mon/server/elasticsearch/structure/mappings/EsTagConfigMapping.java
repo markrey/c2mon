@@ -52,6 +52,11 @@ public class EsTagConfigMapping implements EsMapping {
 
     /** Valid types are: "number", "boolean", "string", "object" */
     Unit unit;
+    Timestamp timestamp;
+    Description description;
+    Mode mode;
+    MaxValue maxValue;
+    MinValue minValue;
 
     C2monMetadata c2mon;
     Metadata metadata;
@@ -63,6 +68,11 @@ public class EsTagConfigMapping implements EsMapping {
       this.name = new Name();
 
       this.unit = new Unit();
+      this.timestamp = new Timestamp();
+      this.description = new Description();
+      this.mode = new Mode();
+      this.maxValue = new MaxValue();
+      this.minValue = new MinValue();
 
       this.c2mon = new C2monMetadata();
       this.metadata = new Metadata();
@@ -87,15 +97,6 @@ public class EsTagConfigMapping implements EsMapping {
       private final String format = epochMillisFormat;
     }
 
-    class SourceTimestamp extends Timestamp {
-    }
-
-    class ServerTimestamp extends Timestamp {
-    }
-
-    class DaqTimestamp extends Timestamp {
-    }
-
     class Status {
       private final String type = ValueType.INTEGER.toString();
     }
@@ -106,6 +107,26 @@ public class EsTagConfigMapping implements EsMapping {
 
     class Unit {
       private final String type = ValueType.STRING.toString();
+      private final String index = indexNotAnalyzed;
+    }
+
+    class Description {
+      private final String type = ValueType.STRING.toString();
+      private final String index= indexNotAnalyzed;
+    }
+
+    class Mode {
+      private final String type = ValueType.INTEGER.toString();
+      private final String index = indexNotAnalyzed;
+    }
+
+    class MaxValue {
+      private final String type = ValueType.OBJECT.toString();
+      private final String index = indexNotAnalyzed;
+    }
+
+    class MinValue {
+      private final String type = ValueType.OBJECT.toString();
       private final String index = indexNotAnalyzed;
     }
 
@@ -122,13 +143,15 @@ public class EsTagConfigMapping implements EsMapping {
         put("process", new Process());
         put("equipment", new Equipment());
         put("subEquipment", new SubEquipment());
+        put("logged", new Logged());
 
         put("dataType", new DataType());
-
-        put("serverTimestamp", new ServerTimestamp());
-        put("sourceTimestamp", new SourceTimestamp());
-        put("daqTimestamp", new DaqTimestamp());
       }};
+    }
+
+    class Logged {
+      private final String type = ValueType.BOOLEAN.toString();
+      private final String index = indexNotAnalyzed;
     }
 
     class Process {

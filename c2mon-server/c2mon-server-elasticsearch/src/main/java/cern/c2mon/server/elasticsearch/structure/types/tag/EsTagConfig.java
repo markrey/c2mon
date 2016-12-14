@@ -17,6 +17,7 @@
 
 package cern.c2mon.server.elasticsearch.structure.types.tag;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,9 +26,8 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-import cern.c2mon.pmanager.IFallback;
-import cern.c2mon.pmanager.fallback.exception.DataFallbackException;
 import cern.c2mon.server.elasticsearch.structure.types.GsonSupplier;
+import cern.c2mon.shared.client.tag.TagMode;
 
 /**
  * @author Szymon Halastra
@@ -39,21 +39,31 @@ public class EsTagConfig {
   @NonNull
   protected static final transient Gson gson = GsonSupplier.INSTANCE.get();
 
-  protected long id;
-  protected String name;
-  protected Map<String, String> metadata = new HashMap<>();
+  private long id;
+  private String name;
+  private String unit;
+  private String description;
+  private TagMode mode;
+  private Date timestamp;
 
-  private EsTagC2monInfo c2mon;
 
-  public EsTagConfig() {
-    this.id = -1L;
-    this.c2mon = new EsTagC2monInfo("String");
-  }
+  //TODO: add min max values, check DatatagCacheObject, define as double
+//  private Comparable maxValue = null;
+//
+//  private Comparable minValue = null;
 
-  public EsTagConfig(Long id, String name, String dataType, Map<String, String> metadata) {
+  private Map<String, String> metadata = new HashMap<>();
+  private EsTagConfigC2monInfo c2mon;
+
+  public EsTagConfig(Long id, String name, String unit, String description,
+                     short mode, Date timestamp, String dataType, Map<String, String> metadata) {
     this.id = id;
     this.name = name;
-    this.c2mon = new EsTagC2monInfo(dataType);
+    this.unit = unit;
+    this.description = description;
+    this.mode = TagMode.values()[mode];
+    this.timestamp = timestamp;
+    this.c2mon = new EsTagConfigC2monInfo(dataType);
     this.metadata = metadata;
   }
 

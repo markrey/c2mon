@@ -17,6 +17,7 @@
 
 package cern.c2mon.server.elasticsearch.structure.type;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -54,7 +55,8 @@ public class EsTagConfigTest {
     Map<String, String> metadata = new HashMap<>();
     metadata.put("test", "test");
 
-    esTagConfig = new EsTagConfig(1L, "test", Long.class.getSimpleName(), metadata);
+    esTagConfig = new EsTagConfig(1L, "test", "tag", "dummy",
+            (short) 1, new Date(), Long.class.getSimpleName(), metadata);
 
     expectedJson = gson.toJson(esTagConfig);
   }

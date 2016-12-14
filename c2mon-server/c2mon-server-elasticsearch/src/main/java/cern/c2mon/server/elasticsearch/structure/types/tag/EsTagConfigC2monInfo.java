@@ -1,4 +1,4 @@
-/******************************************************************************
+/*******************************************************************************
  * Copyright (C) 2010-2016 CERN. All rights not expressly granted are reserved.
  *
  * This file is part of the CERN Control and Monitoring Platform 'C2MON'.
@@ -13,34 +13,23 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with C2MON. If not, see <http://www.gnu.org/licenses/>.
- *****************************************************************************/
+ ******************************************************************************/
+
 package cern.c2mon.server.elasticsearch.structure.types.tag;
 
 import lombok.Data;
 
-import cern.c2mon.server.common.tag.Tag;
-
+/**
+ * @author Szymon Halastra
+ */
 @Data
-public class EsTagC2monInfo extends C2monInfo {
+public class EsTagConfigC2monInfo extends C2monInfo {
+  private boolean logged;
+
 
   /**
    * The fully qualified value (classname) of a tag's
    * enclosed metric value
    */
   protected final String dataType;
-
-  /**
-   * The time when the server received the {@link Tag}
-   */
-  private long serverTimestamp;
-
-  /**
-   * The time when the {@link Tag} value was collected.
-   */
-  private long sourceTimestamp;
-
-  /**
-   * The time when the DAQ received the {@link Tag}
-   */
-  private long daqTimestamp;
 }
