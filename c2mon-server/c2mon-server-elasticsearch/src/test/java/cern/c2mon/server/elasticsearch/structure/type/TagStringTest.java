@@ -98,7 +98,7 @@ public class TagStringTest {
     tag.getMetadata().put("process","P_GTCTESTCM11");
     tag.getMetadata().put("equipment", "E_OPC_GTCTESTCM11");
 
-    final String expectedTagJson = "{\"id\":192506,\"name\":\"CM.MEY.VGTCTESTCM11:STATUS\",\"valueString\":\"DOWN\",\"valueDescription\":\"Communication fault tag indicates that equipment E_OPC_GTCTESTCM11 is down. Reason: Problems connecting to VGTCTESTCM11: Problems wih the DCOM connection occured\",\"unit\":\"n/a\",\"quality\":{\"status\":0,\"valid\":true,\"statusInfo\":[\"OK\"]},\"timestamp\":1454342362957,\"c2mon\":{\"process\":\"P_GTCTESTCM11\",\"equipment\":\"E_OPC_GTCTESTCM11\",\"dataType\":\"string\",\"serverTimestamp\":1451915554970,\"sourceTimestamp\":1451915554970,\"daqTimestamp\":1454342362957},\"metadata\":{}}";
+    final String expectedTagJson = "{\"id\":192506,\"name\":\"CM.MEY.VGTCTESTCM11:STATUS\",\"valueString\":\"DOWN\",\"valueDescription\":\"Communication fault tag indicates that equipment E_OPC_GTCTESTCM11 is down. Reason: Problems connecting to VGTCTESTCM11: Problems wih the DCOM connection occured\",\"unit\":\"n/a\",\"quality\":{\"status\":0,\"valid\":true,\"statusInfo\":[\"OK\"]},\"timestamp\":1454342362957,\"c2mon\":{\"dataType\":\"string\",\"serverTimestamp\":1451915554970,\"sourceTimestamp\":1451915554970,\"daqTimestamp\":1454342362957,\"process\":\"P_GTCTESTCM11\",\"equipment\":\"E_OPC_GTCTESTCM11\"},\"metadata\":{}}";
     IFallback result = new EsTag().getObject(expectedTagJson);
     assertTrue(result instanceof EsTag);
     assertEquals(expectedTagJson, result.toString());
