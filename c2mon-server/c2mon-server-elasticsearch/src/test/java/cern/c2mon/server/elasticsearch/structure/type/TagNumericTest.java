@@ -79,11 +79,10 @@ public class TagNumericTest {
   public void testGetObject() {
 
     final String expectedTagJson = "{\"id\":1,\"name\":\"CLIC:CFC-CCR-ALLGPSPS:SYS.MEM.FREEPCT\"," +
-        "\"value\":73.9237,\"unit\":\"n/a\",\"type\":\"number\",\"quality\":{\"status\":0,\"valid\":true," +
-        "\"statusInfo\":[\"OK\"]},\"timestamp\":1454342362957," +
-        "\"c2mon\":{\"process\":\"P_CLIC_SPS\",\"equipment\":\"CLIC:CFC-CCR-ALLGPSPS\",\"dataType\":\"float\"," +
-        "\"serverTimestamp\":1454342362981,\"sourceTimestamp\":1454342362981,\"daqTimestamp\":1454342362957}," +
-        "\"metadata\":{\"metaFieldName\":\"metaValue\"}}";
+            "\"value\":73.9237,\"unit\":\"n/a\",\"type\":\"number\",\"quality\":{\"status\":0,\"valid\":true," +
+            "\"statusInfo\":[\"OK\"]},\"timestamp\":1454342362957,\"c2mon\":{\"dataType\":\"float\"," +
+            "\"serverTimestamp\":1454342362981,\"sourceTimestamp\":1454342362981,\"daqTimestamp\":1454342362957}," +
+            "\"metadata\":{\"metaFieldName\":\"metaValue\"}}";
 
     EsTag tagNumeric = new EsTag(1L, Integer.class.getName());
     IFallback result = tagNumeric.getObject(expectedTagJson);
