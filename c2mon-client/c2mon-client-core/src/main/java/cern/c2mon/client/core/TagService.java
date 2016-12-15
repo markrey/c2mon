@@ -386,7 +386,7 @@ public interface TagService {
    * WARN: Expressions starting with a leading wildcard character are potentially very expensive (ie. full scan) for indexed caches
    *
    * @param tagIds A collection of data tag id's
-   * @return A collection of all <code>Tag</code> objects
+   * @return A collection of all {@link Tag} objects
    * @throws RuntimeException In case a communication problems with JMS or the C2MON server
    *         occurs while trying to retrieve tag information.
    * @see #subscribe(Set, BaseTagListener)
@@ -397,9 +397,9 @@ public interface TagService {
   /**
    * Returns a list of all tags which match the given key-value pair
    *
-   * @param key
-   * @param value
-   * @return A collection of all <code>Tag</code> objects
+   * @param A metadata key field
+   * @param A metadata value field
+   * @return A collection of all {@link Tag} objects
    */
   Collection<Tag> findByMetadata(String key, String value);
 
