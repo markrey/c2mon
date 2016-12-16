@@ -397,9 +397,9 @@ public interface TagService {
   /**
    * Returns a list of all tags which match the given key-value pair
    *
-   * @param A metadata key field
-   * @param A metadata value field
-   * @return A collection of all {@link Tag} objects
+   * @param key   the key to match
+   * @param value the value to match
+   * @return a collection of all {@link Tag} objects which have matching metadata
    */
   Collection<Tag> findByMetadata(String key, String value);
 
