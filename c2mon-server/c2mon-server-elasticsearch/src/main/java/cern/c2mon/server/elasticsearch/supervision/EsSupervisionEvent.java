@@ -14,33 +14,47 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with C2MON. If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
-package cern.c2mon.server.elasticsearch.structure.types.tag;
+package cern.c2mon.server.elasticsearch.supervision;
 
+import cern.c2mon.server.elasticsearch.types.GsonSupplier;
+import com.google.gson.Gson;
 import lombok.Data;
+import lombok.NonNull;
 
-import cern.c2mon.server.common.tag.Tag;
+import cern.c2mon.pmanager.IFallback;
 
+/**
+ * Represents a SupervisionEvent for Elasticsearch.
+ *
+ * @author Alban Marguet
+ */
 @Data
-public class EsTagC2monInfo extends C2monInfo {
+public class EsSupervisionEvent implements IFallback {
+  @NonNull
+  private final transient Gson gson = GsonSupplier.INSTANCE.get();
+
+  private long id;
+  private String name;
+  private String entity;
+  private String message;
+  private String status;
+  private long timestamp;
 
   /**
-   * The fully qualified value (classname) of a tag's
-   * enclosed metric value
+   * JSON representation of the EsSupervisionEvent
    */
-  protected final String dataType;
+  @Override
+  public String toString() {
+    return gson.toJson(this);
+  }
 
-  /**
-   * The time when the server received the {@link Tag}
-   */
-  private long serverTimestamp;
+  @Override
+  public IFallback getObject(String line) {
+    return gson.fromJson(line, EsSupervisionEvent.class);
+  }
 
-  /**
-   * The time when the {@link Tag} value was collected.
-   */
-  private long sourceTimestamp;
-
-  /**
-   * The time when the DAQ received the {@link Tag}
-   */
-  private long daqTimestamp;
+  @Override
+  public String getId() {
+    return String.valueOf(id);
+  }
 }

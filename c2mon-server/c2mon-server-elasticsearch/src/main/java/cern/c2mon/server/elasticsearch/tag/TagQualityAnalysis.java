@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with C2MON. If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
-package cern.c2mon.server.elasticsearch.structure.types.tag;
+package cern.c2mon.server.elasticsearch.tag;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
