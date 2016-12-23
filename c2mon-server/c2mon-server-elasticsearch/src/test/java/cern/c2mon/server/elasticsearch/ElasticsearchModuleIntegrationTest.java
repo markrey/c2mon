@@ -18,10 +18,11 @@ package cern.c2mon.server.elasticsearch;
 
 import cern.c2mon.server.elasticsearch.config.BaseElasticsearchIntegrationTest;
 import cern.c2mon.server.elasticsearch.connector.TransportConnector;
-import cern.c2mon.server.elasticsearch.listener.EsAlarmLogListener;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
 /**
  * Integration test with the core modules.
  *
@@ -35,7 +36,7 @@ public class ElasticsearchModuleIntegrationTest extends BaseElasticsearchIntegra
 
   @Before
   public void setup() {
-    while(!connector.isConnected()) {
+    while (!connector.isConnected()) {
       connector.waitForYellowStatus();
     }
   }
@@ -48,5 +49,4 @@ public class ElasticsearchModuleIntegrationTest extends BaseElasticsearchIntegra
       log.info(index);
     }
   }
-
 }
