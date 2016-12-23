@@ -16,31 +16,41 @@
  *****************************************************************************/
 package cern.c2mon.server.elasticsearch.tag;
 
-import lombok.Data;
+import cern.c2mon.pmanager.IFallback;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import cern.c2mon.server.common.tag.Tag;
+import java.io.IOException;
+import java.util.HashMap;
 
-@Data
-public class EsTagC2monInfo extends C2monInfo {
+/**
+ * @author Alban Marguet
+ * @author Justin Lewis Salmon
+ */
+public class TagDocument extends HashMap<String, Object> implements IFallback {
 
-  /**
-   * The fully qualified value (classname) of a tag's
-   * enclosed metric value
-   */
-  protected final String dataType;
+  private static final ObjectMapper mapper = new ObjectMapper();
 
-  /**
-   * The time when the server received the {@link Tag}
-   */
-  private long serverTimestamp;
+  @Override
+  public String getId() {
+    return String.valueOf(this.get("id"));
+  }
 
-  /**
-   * The time when the {@link Tag} value was collected.
-   */
-  private long sourceTimestamp;
+  @Override
+  public IFallback getObject(String line) {
+    try {
+      return mapper.readValue(line, TagDocument.class);
+    } catch (IOException e) {
+      throw new RuntimeException("Error reading line from fallback", e);
+    }
+  }
 
-  /**
-   * The time when the DAQ received the {@link Tag}
-   */
-  private long daqTimestamp;
+  @Override
+  public String toString() {
+    try {
+      return mapper.writeValueAsString(this);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Error serializing document", e);
+    }
+  }
 }
