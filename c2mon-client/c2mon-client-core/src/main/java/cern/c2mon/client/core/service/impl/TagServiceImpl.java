@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import cern.c2mon.client.common.listener.BaseListener;
 import cern.c2mon.client.common.listener.BaseTagListener;
 import cern.c2mon.client.common.listener.TagListener;
 import cern.c2mon.client.common.tag.Tag;
@@ -70,7 +69,7 @@ public class TagServiceImpl implements AdvancedTagService {
   private final RequestHandler clientRequestHandler;
 
   /** List of subscribed data tag update listeners */
-  private final Set<BaseListener> tagUpdateListeners = new HashSet<>();
+  private final Set<BaseTagListener> tagUpdateListeners = new HashSet<>();
 
   private final ElasticsearchService elasticsearchService;
   /**
@@ -92,18 +91,6 @@ public class TagServiceImpl implements AdvancedTagService {
     this.elasticsearchService = elasticsearchService;
   }
 
-  @Deprecated
-  public Collection<Tag> getSubscriptions(final BaseListener listener) {
-    Collection<Tag> cacheTagList = cache.getAllTagsForListener(listener);
-    Collection<Tag> clonedDataTags = new ArrayList<>(cacheTagList.size());
-
-    for (Tag cdt : cacheTagList) {
-      clonedDataTags.add(((TagImpl) cdt).clone());
-    }
-
-    return clonedDataTags;
-  }
-
   @Override
   public Collection<Tag> getSubscriptions(final BaseTagListener listener) {
     Collection<Tag> cacheTagList = cache.getAllTagsForListener(listener);
@@ -114,11 +101,6 @@ public class TagServiceImpl implements AdvancedTagService {
     }
 
     return clonedDataTags;
-  }
-
-  @Deprecated
-  public Set<Long> getAllSubscribedDataTagIds(final BaseListener listener) {
-    return cache.getAllTagIdsForListener(listener);
   }
 
   @Override
@@ -184,7 +166,7 @@ public class TagServiceImpl implements AdvancedTagService {
    *                                    current value of the tag.
    * @return The initial values of the subscribed tags.
    */
-  public synchronized <T extends BaseListener> void doSubscription(final Set<Long> tagIds, final T listener) {
+  public synchronized <T extends BaseTagListener> void doSubscription(final Set<Long> tagIds, final T listener) {
     if (tagIds == null) {
       String error = "Called with null parameter (id collection). Ignoring request.";
       log.warn("doSubscription() : " + error);
@@ -279,7 +261,7 @@ public class TagServiceImpl implements AdvancedTagService {
   }
 
   @Deprecated
-  public void unsubscribeAllDataTags(final BaseListener listener) {
+  public void unsubscribeAllDataTags(final BaseTagListener listener) {
     cache.unsubscribeAllDataTags(listener);
     tagUpdateListeners.remove(listener);
   }
@@ -291,7 +273,7 @@ public class TagServiceImpl implements AdvancedTagService {
   }
 
   @Deprecated
-  public void unsubscribeDataTags(final Set<Long> dataTagIds, final BaseListener listener) {
+  public void unsubscribeDataTags(final Set<Long> dataTagIds, final BaseTagListener listener) {
     cache.unsubscribeDataTags(dataTagIds, listener);
     tagUpdateListeners.remove(listener);
   }
@@ -390,11 +372,6 @@ public class TagServiceImpl implements AdvancedTagService {
   public int getCacheSize() {
 
     return cache.getCacheSize();
-  }
-
-  @Deprecated
-  public boolean isSubscribed(BaseListener listener) {
-    return tagUpdateListeners.contains(listener);
   }
 
   @Override
