@@ -14,7 +14,7 @@
     <module>c2mon-shared</module>
     <module>docs</module>
   </modules>
-   
+
    <distributionManagement>
      <repository>
        <id>c2mon-releases</id>
@@ -40,6 +40,7 @@
     <org.slf4j.version>1.7.5</org.slf4j.version>
     <elasticsearch.version>2.3.3</elasticsearch.version>
     <io.searchbox.jest.version>2.0.3</io.searchbox.jest.version>
+    <mockito-all.version>1.10.19</mockito-all.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -185,6 +186,11 @@
         <version>2.3.2</version>
       </dependency>
       <dependency>
+        <groupId>org.elasticsearch</groupId>
+        <artifactId>elasticsearch</artifactId>
+        <version>${elasticsearch.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
         <version>2.6.5</version>
@@ -321,6 +327,18 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-test</artifactId>
         <version>${org.springframework.boot.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest-library</artifactId>
+        <version>1.3</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-all</artifactId>
+        <version>${mockito-all.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
