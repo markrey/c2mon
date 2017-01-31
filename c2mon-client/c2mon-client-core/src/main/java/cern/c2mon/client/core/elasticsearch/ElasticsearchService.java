@@ -1,10 +1,13 @@
 package cern.c2mon.client.core.elasticsearch;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.annotation.PostConstruct;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -17,7 +20,6 @@ import io.searchbox.core.SearchResult;
 import io.searchbox.core.search.aggregation.AvgAggregation;
 import io.searchbox.core.search.aggregation.DateHistogramAggregation;
 import io.searchbox.core.search.aggregation.DateHistogramAggregation.DateHistogram;
-import io.searchbox.core.search.aggregation.TermsAggregation;
 import io.searchbox.indices.mapping.GetMapping;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -39,11 +41,12 @@ public class ElasticsearchService {
 
   private JestClient client;
 
-  @Autowired
-  private C2monClientProperties properties;
+  private final String tagIndexPrefix;
 
-  @PostConstruct
-  public void init() {
+  @Autowired
+  public ElasticsearchService(C2monClientProperties properties) {
+    this.tagIndexPrefix = properties.getElasticsearch().getIndexPrefix() + "-tag*";
+
     JestClientFactory factory = new JestClientFactory();
     factory.setHttpClientConfig(new HttpClientConfig.Builder(properties.getElasticsearch().getUrl())
         .multiThreaded(true)
@@ -82,7 +85,7 @@ public class ElasticsearchService {
                     )));
 
     SearchResult result;
-    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex("c2mon-tag*").build();
+    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(tagIndexPrefix).build();
     long start = System.currentTimeMillis();
 
     try {
@@ -149,7 +152,7 @@ public class ElasticsearchService {
         .size(size));
 
     SearchResult result;
-    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex("c2mon-tag*").build();
+    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(tagIndexPrefix).build();
 
     try {
       result = client.execute(search);
@@ -208,14 +211,15 @@ public class ElasticsearchService {
     List<Long> tagIds = new ArrayList<>();
 
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    searchSourceBuilder.query(
-        nestedQuery("metadata",
-            boolQuery().must(matchQuery("metadata." + key, value)))
+    searchSourceBuilder
+        .query(prefixQuery("metadata." + key, value))
+        .size(0)
+        .aggregation(AggregationBuilders.terms("group-by-id")
+            .field("id")
         );
 
     SearchResult result;
-    Search search = new Search.Builder(searchSourceBuilder.toString())
-            .addIndex(properties.getElasticsearch().getTagConfigIndex()).build();
+    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(tagIndexPrefix).build();
 
     try {
       result = client.execute(search);
@@ -244,7 +248,7 @@ public class ElasticsearchService {
     Set<String> keys = new HashSet<>();
 
     JestResult result;
-    GetMapping get = new GetMapping.Builder().addIndex("c2mon-tag*").build();
+    GetMapping get = new GetMapping.Builder().addIndex(tagIndexPrefix).build();
 
     try {
       result = client.execute(get);

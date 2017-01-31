@@ -31,7 +31,6 @@ import cern.c2mon.client.common.listener.TagListener;
 import cern.c2mon.client.common.tag.Tag;
 import cern.c2mon.client.core.cache.CacheSynchronizationException;
 import cern.c2mon.client.core.cache.ClientDataTagCache;
-import cern.c2mon.client.core.config.C2monClientProperties;
 import cern.c2mon.client.core.elasticsearch.ElasticsearchService;
 import cern.c2mon.client.core.jms.RequestHandler;
 import cern.c2mon.client.core.listener.TagSubscriptionListener;
@@ -72,6 +71,7 @@ public class TagServiceImpl implements AdvancedTagService {
   private final Set<BaseTagListener> tagUpdateListeners = new HashSet<>();
 
   private final ElasticsearchService elasticsearchService;
+
   /**
    * Default Constructor, used by Spring to instantiate the Singleton service
    *
@@ -162,9 +162,6 @@ public class TagServiceImpl implements AdvancedTagService {
    * Inner method that handles the tag subscription.
    * @param tagIds List of tag ids
    * @param listener The listener to be added to the <code>Tag</code> references
-   * @param sendInitialValuesToListener if set to <code>true</code>, the listener will receive the
-   *                                    current value of the tag.
-   * @return The initial values of the subscribed tags.
    */
   public synchronized <T extends BaseTagListener> void doSubscription(final Set<Long> tagIds, final T listener) {
     if (tagIds == null) {
@@ -207,9 +204,6 @@ public class TagServiceImpl implements AdvancedTagService {
    * Inner method that handles the tag subscription.
    * @param regexList List of tag ids
    * @param listener The listener to be added to the <code>Tag</code> references
-   * @param sendInitialValuesToListener if set to <code>true</code>, the listener will receive the
-   *                                    current value of the tag.
-   * @return The initial values of the subscribed tags.
    */
   private synchronized <T extends BaseTagListener> void doSubscriptionByName(final Set<String> regexList, final T listener) {
     if (regexList == null) {
@@ -284,8 +278,6 @@ public class TagServiceImpl implements AdvancedTagService {
     tagUpdateListeners.remove(listener);
   }
 
-
-
   @Override
   public void addTagSubscriptionListener(final TagSubscriptionListener listener) {
     cache.addTagSubscriptionListener(listener);
@@ -295,8 +287,6 @@ public class TagServiceImpl implements AdvancedTagService {
   public void removeTagSubscriptionListener(final TagSubscriptionListener listener) {
     cache.removeTagSubscriptionListener(listener);
   }
-
-
 
   @Override
   public Collection<Tag> get(final Collection<Long> tagIds) {
