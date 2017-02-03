@@ -41,11 +41,14 @@ public class ElasticsearchService {
 
   private JestClient client;
 
-  private final String tagIndexPrefix;
+  private final String timeSeriesIndex;
+
+  private final String configIndex;
 
   @Autowired
   public ElasticsearchService(C2monClientProperties properties) {
-    this.tagIndexPrefix = properties.getElasticsearch().getIndexPrefix() + "-tag*";
+    this.timeSeriesIndex = properties.getElasticsearch().getIndexPrefix() + "-tag*";
+    this.configIndex = properties.getElasticsearch().getTagConfigIndex();
 
     JestClientFactory factory = new JestClientFactory();
     factory.setHttpClientConfig(new HttpClientConfig.Builder(properties.getElasticsearch().getUrl())
@@ -85,7 +88,7 @@ public class ElasticsearchService {
                     )));
 
     SearchResult result;
-    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(tagIndexPrefix).build();
+    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(timeSeriesIndex).build();
     long start = System.currentTimeMillis();
 
     try {
@@ -152,7 +155,7 @@ public class ElasticsearchService {
         .size(size));
 
     SearchResult result;
-    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(tagIndexPrefix).build();
+    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(timeSeriesIndex).build();
 
     try {
       result = client.execute(search);
@@ -183,7 +186,7 @@ public class ElasticsearchService {
 
     SearchResult result;
     Search search = new Search.Builder(searchSourceBuilder.toString())
-            .addIndex(properties.getElasticsearch().getTagConfigIndex()).build();
+            .addIndex(configIndex).build();
 
     try {
       result = client.execute(search);
@@ -219,7 +222,7 @@ public class ElasticsearchService {
         );
 
     SearchResult result;
-    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(tagIndexPrefix).build();
+    Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(configIndex).build();
 
     try {
       result = client.execute(search);
@@ -248,7 +251,7 @@ public class ElasticsearchService {
     Set<String> keys = new HashSet<>();
 
     JestResult result;
-    GetMapping get = new GetMapping.Builder().addIndex(tagIndexPrefix).build();
+    GetMapping get = new GetMapping.Builder().addIndex(timeSeriesIndex).build();
 
     try {
       result = client.execute(get);
