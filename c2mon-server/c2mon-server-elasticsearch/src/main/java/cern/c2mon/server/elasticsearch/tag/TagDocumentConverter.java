@@ -49,32 +49,16 @@ import cern.c2mon.shared.common.type.TypeConverter;
  */
 @Slf4j
 @Component
-public class TagDocumentConverter implements Converter<Tag, TagDocument> {
-
-  private final ProcessCache processCache;
-  private final EquipmentCache equipmentCache;
-  private final SubEquipmentCache subEquipmentCache;
+public class TagDocumentConverter extends BaseTagDocumentConverter {
 
   @Autowired
-  public TagDocumentConverter(final ProcessCache processCache,
-                              final EquipmentCache equipmentCache,
-                              final SubEquipmentCache subEquipmentCache) {
-    this.processCache = processCache;
-    this.equipmentCache = equipmentCache;
-    this.subEquipmentCache = subEquipmentCache;
+  public TagDocumentConverter(final ProcessCache processCache, final EquipmentCache equipmentCache, final SubEquipmentCache subEquipmentCache) {
+    super(processCache, equipmentCache, subEquipmentCache);
   }
 
   @Override
   public TagDocument convert(final Tag tag) {
-    Map<String, Object> map = new HashMap<>();
-
-    map.put("id", tag.getId());
-    map.put("name", tag.getName());
-    map.put("description", tag.getDescription());
-    map.put("metadata", getMetadata(tag));
-    map.put("unit", tag.getUnit());
-    map.put("mode", tag.getMode());
-    map.put("c2mon", getC2monMetadata(tag));
+    Map<String, Object> map = super.convert(tag);
 
     map.put("timestamp", tag.getTimestamp().getTime());
     map.put("quality", getQuality(tag));
@@ -109,25 +93,9 @@ public class TagDocumentConverter implements Converter<Tag, TagDocument> {
     return tagDocument;
   }
 
-  private Map<String, Object> getC2monMetadata(Tag tag) {
-    Map<String, Object> map = new HashMap<>();
-
-    map.put("dataType", tag.getDataType());
-
-    if (!tag.getProcessIds().isEmpty()) {
-      Process process = processCache.get(tag.getProcessIds().iterator().next());
-      map.put("process", process.getName());
-    }
-
-    if (!tag.getEquipmentIds().isEmpty()) {
-      Equipment equipment = equipmentCache.get(tag.getEquipmentIds().iterator().next());
-      map.put("equipment", equipment.getName());
-    }
-
-    if (!tag.getSubEquipmentIds().isEmpty()) {
-      SubEquipment subEquipment = subEquipmentCache.get(tag.getSubEquipmentIds().iterator().next());
-      map.put("subEquipment", subEquipment.getName());
-    }
+  @Override
+  protected Map<String, Object> getC2monMetadata(Tag tag) {
+    Map<String, Object> map = super.getC2monMetadata(tag);
 
     map.put("serverTimestamp", tag.getCacheTimestamp().getTime());
 
@@ -144,19 +112,6 @@ public class TagDocumentConverter implements Converter<Tag, TagDocument> {
     }
 
     return map;
-  }
-
-  private Map<String, Object> getMetadata(Tag tag) {
-    Metadata metadata = tag.getMetadata();
-
-    if (metadata != null) {
-      return metadata.getMetadata().entrySet().stream().collect(Collectors.toMap(
-          Map.Entry::getKey,
-          e -> e.getValue() == null ? null : e.getValue()
-      ));
-    }
-
-    return Collections.emptyMap();
   }
 
   private Map<String, Object> getQuality(Tag tag) {

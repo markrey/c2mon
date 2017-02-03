@@ -15,11 +15,10 @@
  * along with C2MON. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package cern.c2mon.server.elasticsearch.indexer;
+package cern.c2mon.server.elasticsearch.tag.config;
 
 import javax.annotation.PostConstruct;
 
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
@@ -27,75 +26,72 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import cern.c2mon.server.elasticsearch.Indices;
+import cern.c2mon.server.elasticsearch.MappingFactory;
+import cern.c2mon.server.elasticsearch.client.ElasticsearchClient;
 import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
-import cern.c2mon.server.elasticsearch.connector.TransportConnector;
-import cern.c2mon.server.elasticsearch.structure.mappings.EsTagConfigMapping;
-import cern.c2mon.server.elasticsearch.structure.types.tag.EsTagConfig;
 
 /**
+ * This class manages the indexing of {@link TagConfigDocument} instances to
+ * the Elasticsearch cluster.
+ *
  * @author Szymon Halastra
+ * @author Justin Lewis Salmon
  */
 @Slf4j
 @Component
-public class EsTagConfigIndexer {
+public class TagConfigDocumentIndexer {
 
   private static final String TYPE = "tag_config";
-  @Autowired
-  @Setter
-  private ElasticsearchProperties properties;
+
+  private final ElasticsearchClient client;
+
+  private final String configIndex;
 
   @Autowired
-  private TransportConnector connector;
-
-  @Autowired
-  public EsTagConfigIndexer(final TransportConnector connector, final ElasticsearchProperties properties) {
-    this.connector = connector;
-    this.properties = properties;
+  public TagConfigDocumentIndexer(final ElasticsearchClient client, final ElasticsearchProperties properties) {
+    this.client = client;
+    this.configIndex = properties.getTagConfigIndex();
   }
 
   @PostConstruct
   public void init() {
-    connector.waitForYellowStatus();
-    connector.createIndex(properties.getTagConfigIndex());
-    connector.createIndexTypeMapping(properties.getTagConfigIndex(), TYPE,
-            new EsTagConfigMapping().getMapping());
+    this.client.waitForYellowStatus();
+    Indices.create(configIndex, TYPE, MappingFactory.createTagConfigMapping());
   }
 
-  public void indexTagConfig(EsTagConfig tag) {
-    IndexRequest indexNewTag = new IndexRequest(properties.getTagConfigIndex(), TYPE,
-            String.valueOf(tag.getId())).source(tag.toString());
+  public void indexTagConfig(TagConfigDocument tag) {
+    IndexRequest indexNewTag = new IndexRequest(configIndex, TYPE,
+            String.valueOf(tag.getId())).source(tag.toString()).routing(tag.getId());
 
     try {
-      connector.getClient().index(indexNewTag).get();
-      connector.waitForYellowStatus();
-    }
-    catch (Exception e) {
+      client.getClient().index(indexNewTag).get();
+      client.waitForYellowStatus();
+    } catch (Exception e) {
       log.error("Error occurred while indexing the config for tag #{}", tag.getId(), e);
     }
   }
 
-  public void updateTagConfig(EsTagConfig tag) {
-    UpdateRequest updateRequest = new UpdateRequest(properties.getTagConfigIndex(), TYPE,
-            String.valueOf(tag.getId())).doc(tag.toString());
+  public void updateTagConfig(TagConfigDocument tag) {
+    UpdateRequest updateRequest = new UpdateRequest(configIndex, TYPE,
+            String.valueOf(tag.getId())).doc(tag.toString()).routing(tag.getId());
 
     try {
-      connector.getClient().update(updateRequest).get();
-      connector.waitForYellowStatus();
-    }
-    catch (Exception e) {
+      client.getClient().update(updateRequest).get();
+      client.waitForYellowStatus();
+    } catch (Exception e) {
       log.error("Error occurred while updating the config for tag #{}", tag.getId(), e);
     }
   }
 
-  public void removeTagConfig(EsTagConfig tag) {
-    DeleteRequest deleteRequest = new DeleteRequest(properties.getTagConfigIndex(), TYPE,
-            String.valueOf(tag.getId()));
+  public void removeTagConfig(TagConfigDocument tag) {
+    DeleteRequest deleteRequest = new DeleteRequest(configIndex, TYPE,
+            String.valueOf(tag.getId())).routing(tag.getId());
 
     try {
-      connector.getClient().delete(deleteRequest).get();
-      connector.waitForYellowStatus();
-    }
-    catch (Exception e) {
+      client.getClient().delete(deleteRequest).get();
+      client.waitForYellowStatus();
+    } catch (Exception e) {
       log.error("Error occurred while deleting the config for tag #{}", tag.getId(), e);
     }
   }

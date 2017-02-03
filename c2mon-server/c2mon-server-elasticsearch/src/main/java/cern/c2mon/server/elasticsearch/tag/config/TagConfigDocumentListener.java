@@ -15,35 +15,34 @@
  * along with C2MON. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package cern.c2mon.server.elasticsearch.listener;
+package cern.c2mon.server.elasticsearch.tag.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import cern.c2mon.server.common.listener.ConfigurationEventListener;
 import cern.c2mon.server.common.tag.Tag;
-import cern.c2mon.server.elasticsearch.indexer.EsTagConfigIndexer;
-import cern.c2mon.server.elasticsearch.structure.converter.EsTagConfigConverter;
 import cern.c2mon.shared.client.configuration.ConfigConstants.Action;
 
 /**
+ * Listens for tag configuration events, converts them to
+ * {@link TagConfigDocument} instances and forwards them for indexing.
+ *
  * @author Szymon Halastra
  */
 @Slf4j
 @Component
-public class EsTagConfigListener implements ConfigurationEventListener {
+public class TagConfigDocumentListener implements ConfigurationEventListener {
 
-  private final EsTagConfigIndexer esTagConfigIndexer;
+  private final TagConfigDocumentIndexer indexer;
 
-  private final EsTagConfigConverter esTagConfigConverter;
+  private final TagConfigDocumentConverter converter;
 
   @Autowired
-  public EsTagConfigListener(final EsTagConfigIndexer esTagConfigIndexer,
-                             final EsTagConfigConverter esTagConfigConverter) {
-    this.esTagConfigIndexer = esTagConfigIndexer;
-    this.esTagConfigConverter = esTagConfigConverter;
+  public TagConfigDocumentListener(final TagConfigDocumentIndexer indexer, final TagConfigDocumentConverter converter) {
+    this.indexer = indexer;
+    this.converter = converter;
   }
 
   @Override
@@ -51,19 +50,18 @@ public class EsTagConfigListener implements ConfigurationEventListener {
     try {
       switch (action) {
         case CREATE:
-          esTagConfigIndexer.indexTagConfig(esTagConfigConverter.convert(tag));
+          indexer.indexTagConfig(converter.convert(tag));
           break;
         case UPDATE:
-          esTagConfigIndexer.updateTagConfig(esTagConfigConverter.convert(tag));
+          indexer.updateTagConfig(converter.convert(tag));
           break;
         case REMOVE:
-          esTagConfigIndexer.removeTagConfig(esTagConfigConverter.convert(tag));
+          indexer.removeTagConfig(converter.convert(tag));
           break;
         default:
           break;
       }
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       throw new RuntimeException("Error indexing tag configuration", e);
     }
   }

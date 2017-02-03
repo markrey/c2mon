@@ -15,32 +15,34 @@
  * along with C2MON. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package cern.c2mon.server.elasticsearch.structure.types.tag;
+package cern.c2mon.server.elasticsearch.tag.config;
 
-import lombok.Data;
+import java.util.HashMap;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Represents a detailed and very specific information
- * about the core functionality of C2MON framework.
- * The values under that information group are defined directly
- * on the core C2MON domain, and are extracted from the
- *
- *  * @author Szymon Halastra
+ * @author Szymon Halastra
  */
-@Data
-public abstract class C2monInfo {
-  /**
-   * The name of the monitored process
-   */
-  protected String process;
+public class TagConfigDocument extends HashMap<String, Object> {
 
-  /**
-   * The name of the monitored equipment
-   */
-  protected String equipment;
+  private static final ObjectMapper mapper = new ObjectMapper();
 
-  /**
-   * The name of the monitored sub-equipment
-   */
-  protected String subEquipment;
+  public <T> T getProperty(String key, Class<T> klass) {
+    return mapper.convertValue(get(key), klass);
+  }
+
+  public String getId() {
+    return String.valueOf(this.get("id"));
+  }
+
+  @Override
+  public String toString() {
+    try {
+      return mapper.writeValueAsString(this);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Error serializing document", e);
+    }
+  }
 }
