@@ -148,6 +148,7 @@ public class TransferTagValueImpl extends ClientRequestReport implements TagValu
     serverTimestamp = pServerTimestamp;
     description = pDescription;
     valueDescription = pValueDescription;
+    valueClassName = value.getClass().toString();
   }
 
   @Override
