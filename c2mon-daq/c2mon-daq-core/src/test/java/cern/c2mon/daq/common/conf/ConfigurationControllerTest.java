@@ -51,6 +51,7 @@ import cern.c2mon.shared.daq.config.DataTagRemove;
 import cern.c2mon.shared.daq.config.DataTagUpdate;
 import cern.c2mon.shared.daq.config.EquipmentConfigurationUpdate;
 import cern.c2mon.shared.daq.config.ProcessConfigurationUpdate;
+import cern.c2mon.shared.daq.config.SubEquipmentUnitAdd;
 import cern.c2mon.shared.daq.config.ChangeReport.CHANGE_STATE;
 import cern.c2mon.shared.common.datatag.address.impl.OPCHardwareAddressImpl;
 import cern.c2mon.shared.common.process.EquipmentConfiguration;
@@ -65,11 +66,13 @@ public class ConfigurationControllerTest {
 
     private static final long TEST_NOT_EXIST_ID = 1337L;
 
-    private static final Long TEST_EQUIPMENT_ID = 1L;
+    private static final long TEST_EQUIPMENT_ID = 1L;
+    
+    private static final long TEST_SUB_EQUIPMENT_ID = 2L;
 
     private static final String DEFAULT_NAME = "default";
 
-    private static final Long TEST_PROCESS_ID = 31415926L;
+    private static final long TEST_PROCESS_ID = 31415926L;
 
     private ConfigurationController configurationController;
 
@@ -376,6 +379,17 @@ public class ConfigurationControllerTest {
         ISourceCommandTag commandTag = configurationController.findCommandTag(TEST_NOT_EXIST_ID);
         assertNull(commandTag);
     }
+    
+	@Test
+	public void testAddSubEquipmentUnitSuccess() throws ConfigurationException {
+		String xml = "<SubEquipmentUnit  id=\"" + TEST_SUB_EQUIPMENT_ID + "\" name=\"E_TEST\">"
+				+ "<commfault-tag-id>201498</commfault-tag-id>" + "<commfault-tag-value>false</commfault-tag-value>"
+				+ "</SubEquipmentUnit>";
+
+		ChangeReport report = configurationController
+				.onSubEquipmentUnitAdd(new SubEquipmentUnitAdd(100L, TEST_SUB_EQUIPMENT_ID, TEST_EQUIPMENT_ID, xml));
+		assertFalse(report.isFail());
+	}
 
     //@Test
     public void testAddEquipmentUnitSuccess() throws ConfigurationException {

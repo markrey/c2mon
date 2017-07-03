@@ -67,7 +67,7 @@ public class ProcessConfigurationLoaderTest {
   private DaqProperties properties = new DaqProperties();
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     processConfigurationLoader = new ProcessConfigurationLoader();
     processConfigurationLoader.setEquipmentConfigurationFactory(EquipmentConfigurationFactory.getInstance());
 
