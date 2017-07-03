@@ -822,10 +822,10 @@ public class ConfigurationController {
     }
 
     SubEquipmentConfiguration subEquipmentConfiguration = null;
-    EquipmentConfigurationFactory equipmentConfigurationFactory = EquipmentConfigurationFactory.getInstance();
-
+   
     // Create the configuration
     try {
+      EquipmentConfigurationFactory equipmentConfigurationFactory = EquipmentConfigurationFactory.getInstance();
       subEquipmentConfiguration = equipmentConfigurationFactory.createSubEquipmentConfiguration(subEquipmentUnitAdd.getSubEquipmentUnitXml());
     } catch (Exception e) {
       changeReport.setState(CHANGE_STATE.FAIL);
