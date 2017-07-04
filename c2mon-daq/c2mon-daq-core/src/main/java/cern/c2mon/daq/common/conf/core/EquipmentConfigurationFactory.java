@@ -33,7 +33,6 @@ import cern.c2mon.shared.util.parser.SimpleXMLParser;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Component
 public class EquipmentConfigurationFactory extends XMLTagValueExtractor implements ConfigurationXMLConstants {
 
   private static EquipmentConfigurationFactory theInstance;
