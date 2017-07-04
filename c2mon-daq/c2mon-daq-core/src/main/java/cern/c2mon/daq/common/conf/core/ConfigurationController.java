@@ -96,6 +96,9 @@ public class ConfigurationController {
   @Autowired(required = false)
   @Qualifier("secondaryRequestSender")
   private ProcessRequestSender secondaryRequestSender;
+  
+  @Autowired
+  private EquipmentConfigurationFactory equipmentConfigurationFactory;
 
   /**
    * Map of data tag changers. It maps equipment id - > changer.
@@ -825,7 +828,6 @@ public class ConfigurationController {
    
     // Create the configuration
     try {
-      EquipmentConfigurationFactory equipmentConfigurationFactory = EquipmentConfigurationFactory.getInstance();
       subEquipmentConfiguration = equipmentConfigurationFactory.createSubEquipmentConfiguration(subEquipmentUnitAdd.getSubEquipmentUnitXml());
     } catch (Exception e) {
       changeReport.setState(CHANGE_STATE.FAIL);
@@ -1063,4 +1065,13 @@ public class ConfigurationController {
   public long getStartUp() {
     return startUp;
   }
+  
+	/**
+	 * Set the equipmentConfigurationFactory.
+	 * 
+	 * @param equipmentConfigurationFactory
+	 */
+	public void setEquipmentConfigurationFactory(EquipmentConfigurationFactory equipmentConfigurationFactory) {
+		this.equipmentConfigurationFactory = equipmentConfigurationFactory;
+	}
 }

@@ -36,17 +36,8 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class EquipmentConfigurationFactory extends XMLTagValueExtractor implements ConfigurationXMLConstants {
 
-  private static EquipmentConfigurationFactory theInstance;
-
   private final SimpleXMLParser parser;
-
-  public static EquipmentConfigurationFactory getInstance() throws ParserConfigurationException {
-    if (theInstance == null)
-      theInstance = new EquipmentConfigurationFactory();
-
-    return theInstance;
-  }
-
+  
   public EquipmentConfigurationFactory() throws ParserConfigurationException {
 	  this.parser = new SimpleXMLParser();
   }
