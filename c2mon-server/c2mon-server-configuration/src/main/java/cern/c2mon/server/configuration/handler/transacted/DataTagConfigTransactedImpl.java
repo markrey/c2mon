@@ -218,17 +218,6 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
     ProcessChange processChange = new ProcessChange();
     try {
       DataTag tagCopy = tagCache.getCopy(id);
-      Collection<Long> ruleIds = tagCopy.getCopyRuleIds();
-      if (!ruleIds.isEmpty()) {
-        LOGGER.trace("Removing Rules dependent on DataTag " + id);
-        for (Long ruleId : new ArrayList<Long>(ruleIds)) {
-          if (tagLocationService.isInTagCache(ruleId)) { //may already have been removed if a previous rule in the list was used in this rule! {
-            ConfigurationElementReport newReport = new ConfigurationElementReport(Action.REMOVE, Entity.RULETAG, ruleId);
-            elementReport.addSubReport(newReport);
-            ruleTagConfigHandler.removeRuleTag(ruleId, newReport);
-          }
-        }
-      }
       tagCache.acquireWriteLockOnKey(id);
       try {
         Collection<Long> alarmIds = tagCopy.getCopyAlarmIds();
