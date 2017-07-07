@@ -40,6 +40,7 @@ import cern.c2mon.server.cache.TagLocationService;
 import cern.c2mon.server.cache.exception.CacheElementNotFoundException;
 import cern.c2mon.server.cache.loading.DataTagLoaderDAO;
 import cern.c2mon.server.common.datatag.DataTag;
+import cern.c2mon.server.configuration.config.ConfigurationProperties;
 import cern.c2mon.server.configuration.handler.AlarmConfigHandler;
 import cern.c2mon.server.configuration.handler.RuleTagConfigHandler;
 import cern.c2mon.server.configuration.impl.ProcessChange;
@@ -65,6 +66,9 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
    */
   private static final Logger LOGGER = LoggerFactory.getLogger(DataTagConfigTransactedImpl.class);
 
+  @Autowired
+  private ConfigurationProperties properties;
+  
   /**
    * Reference to the equipment facade.
    */
@@ -218,6 +222,19 @@ public class DataTagConfigTransactedImpl extends TagConfigTransactedImpl<DataTag
     ProcessChange processChange = new ProcessChange();
     try {
       DataTag tagCopy = tagCache.getCopy(id);
+      if (this.properties.isDeleteRulesAfterTagDeletion()) {
+        Collection<Long> ruleIds = tagCopy.getCopyRuleIds();
+        if (!ruleIds.isEmpty()) {
+          LOGGER.trace("Removing Rules dependent on DataTag " + id);
+          for (Long ruleId : new ArrayList<Long>(ruleIds)) {
+            if (tagLocationService.isInTagCache(ruleId)) { //may already have been removed if a previous rule in the list was used in this rule! {
+              ConfigurationElementReport newReport = new ConfigurationElementReport(Action.REMOVE, Entity.RULETAG, ruleId);
+              elementReport.addSubReport(newReport);
+              ruleTagConfigHandler.removeRuleTag(ruleId, newReport);
+            }
+          }
+        }
+      }
       tagCache.acquireWriteLockOnKey(id);
       try {
         Collection<Long> alarmIds = tagCopy.getCopyAlarmIds();
