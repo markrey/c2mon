@@ -37,8 +37,13 @@ import org.springframework.stereotype.Component;
 import cern.c2mon.server.cache.ClusterCache;
 import cern.c2mon.server.cache.ProcessCache;
 import cern.c2mon.server.cache.ProcessFacade;
+import cern.c2mon.server.cache.RuleTagCache;
+import cern.c2mon.server.cache.TagLocationService;
 import cern.c2mon.server.cache.loading.SequenceDAO;
 import cern.c2mon.server.common.config.ServerProperties;
+import cern.c2mon.server.common.datatag.DataTag;
+import cern.c2mon.server.common.rule.RuleTag;
+import cern.c2mon.server.common.tag.Tag;
 import cern.c2mon.server.configuration.ConfigProgressMonitor;
 import cern.c2mon.server.configuration.ConfigurationLoader;
 import cern.c2mon.server.configuration.config.ConfigurationProperties;
@@ -122,6 +127,10 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
 
   private final DeviceConfigHandler deviceConfigHandler;
 
+  private final TagLocationService tagLocationService;
+
+  private final RuleTagCache ruleTagCache;
+
   private Environment environment;
 
   /**
@@ -165,7 +174,9 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
                                  ConfigurationParser configParser,
                                  SequenceDAO sequenceDAO,
                                  ConfigurationProperties properties,
-                                 ServerProperties serverProperties) {
+                                 ServerProperties serverProperties,
+                                 TagLocationService tagLocationService,
+                                 RuleTagCache ruleTagCache) {
     super();
     this.processCommunicationManager = processCommunicationManager;
     this.configurationDAO = configurationDAO;
@@ -186,6 +197,8 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
     this.sequenceDAO = sequenceDAO;
     this.daqConfigEnabled = properties.isDaqConfigEnabled();
     this.reportDirectory = serverProperties.getHome() + "/reports";
+    this.tagLocationService = tagLocationService;
+    this.ruleTagCache = ruleTagCache;
   }
 
   @Override
@@ -300,6 +313,9 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
                                                  final ConfigProgressMonitor configProgressMonitor,
                                                  final boolean isDBConfig
   ) {
+
+    Map<Long, ConfigurationElement> elementsToCheckRules = new HashMap<>();
+
     ConfigurationReport report = new ConfigurationReport(configId, configName, "");
 
     //map of element reports that need a DAQ child report adding
@@ -316,21 +332,30 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
 
     // Write lock needed to avoid parallel Batch persistence transactions
     try {
-      clusterCache.acquireWriteLockOnKey(this.cachePersistenceLock);
-      if (!isDBConfig && runInParallel(configElements)) {
-        log.debug("Enter parallel configuration");
-        configElements.parallelStream().forEach(element ->
-            applyConfigurationElement(element, processLists, elementPlaceholder, daqReportPlaceholder, report, configId, configProgressMonitor));
+        clusterCache.acquireWriteLockOnKey(this.cachePersistenceLock);
+        if (!isDBConfig && runInParallel(configElements)) {
+            log.debug("Enter parallel configuration");
+            configElements.parallelStream().forEach(element -> {
+                applyConfigurationElement(element, processLists, elementPlaceholder, daqReportPlaceholder, report, configId, configProgressMonitor);
+                if (element.getAction() == Action.CREATE) {
+                    elementsToCheckRules.put(element.getEntityId(), element);
+                }
+            });
+        } else {
+            log.debug("Enter serialized configuration");
+            configElements.stream().forEach(element -> {
+                applyConfigurationElement(element, processLists, elementPlaceholder, daqReportPlaceholder, report, configId, configProgressMonitor);
+                if (element.getAction() == Action.CREATE) {
+                    elementsToCheckRules.put(element.getEntityId(), element);
+                }
+            });
+        }
 
-      } else {
-        log.debug("Enter serialized configuration");
-        configElements.stream().forEach(element ->
-            applyConfigurationElement(element, processLists, elementPlaceholder, daqReportPlaceholder, report, configId, configProgressMonitor));
-      }
+        this.addExistingRulesToTags(elementsToCheckRules);
     } finally {
       clusterCache.releaseWriteLockOnKey(this.cachePersistenceLock);
-    }
-
+    }   
+      
     //send events to Process if enabled, convert the responses and introduce them into the existing report; else set all DAQs to restart
     if (daqConfigEnabled) {
       if (configProgressMonitor != null){
@@ -416,6 +441,33 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
     report.normalize();
 
     return report;
+  }
+  
+  /**
+   * Iterate through existing RuleTags to check if they reference any of the 
+   * given elements.
+   * 
+   * @param elements A map, ID -> ConfigurationElement of elements to check.
+   */
+  private void addExistingRulesToTags(Map<Long, ConfigurationElement> elements) {
+    log.info("Adding existing rules to tags");
+
+    for (Long ruleId : this.ruleTagCache.getKeys()) {
+        RuleTag t =  (RuleTag)this.tagLocationService.get(ruleId);
+
+        for (Long tagId :  t.getRuleInputTagIds()) {
+            if (elements.containsKey(tagId)) {
+                ConfigurationElement element = elements.get(tagId);
+
+                switch (element.getEntity()) {
+                    case DATATAG: dataTagConfigHandler.addRuleToTag(tagId, ruleId); break;
+                    case CONTROLTAG: controlTagConfigHandler.addRuleToTag(tagId, ruleId); break;    
+                    case RULETAG: ruleTagConfigHandler.addRuleToTag(tagId, ruleId); break;    
+                    default: break; //cannot add rules to other types of tags
+                }
+            }
+        }
+    }
   }
 
   /**
