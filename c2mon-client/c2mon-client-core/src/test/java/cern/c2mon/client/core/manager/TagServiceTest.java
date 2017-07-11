@@ -55,6 +55,7 @@ import cern.c2mon.shared.client.tag.TagValueUpdate;
 import cern.c2mon.shared.client.tag.TransferTagImpl;
 import cern.c2mon.shared.common.datatag.DataTagQuality;
 import cern.c2mon.shared.common.datatag.DataTagQualityImpl;
+import org.junit.Ignore;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {
@@ -222,7 +223,7 @@ public class TagServiceTest {
   }
 
   @Test @DirtiesContext
-  //@Ignore("This test is flaky!")
+  @Ignore("This test is flaky!")
   public void testUnsubscribeDataTags() throws JMSException, InterruptedException {
     Set<Long> tagIds1 = new HashSet<>();
     for (long i = 1L; i <= 1000; i++) {
