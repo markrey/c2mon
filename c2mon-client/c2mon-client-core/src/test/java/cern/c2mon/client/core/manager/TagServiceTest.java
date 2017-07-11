@@ -225,7 +225,7 @@ public class TagServiceTest {
   //@Ignore("This test is flaky!")
   public void testUnsubscribeDataTags() throws JMSException, InterruptedException {
     Set<Long> tagIds1 = new HashSet<>();
-    for (long i = 1L; i <= 1000; i++) {
+    for (long i = 1L; i <= 300; i++) {
       tagIds1.add(i);
     }
 
