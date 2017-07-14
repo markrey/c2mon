@@ -16,10 +16,12 @@
  *****************************************************************************/
 package cern.c2mon.shared.common;
 
+import cern.c2mon.shared.common.datatag.address.OPCCommandHardwareAddress;
 import org.junit.Test;
 
 import cern.c2mon.shared.common.datatag.address.impl.OPCHardwareAddressImpl;
 import cern.c2mon.shared.common.datatag.address.impl.PLCHardwareAddressImpl;
+import org.springframework.util.Assert;
 
 public class SimpleTypeReflectionHandlerTest {
 
@@ -37,6 +39,14 @@ public class SimpleTypeReflectionHandlerTest {
     OPCHardwareAddressImpl opcAddress = new OPCHardwareAddressImpl("TEST");
     //conversion from String -> enum
     handler.setSimpleField(opcAddress, "commandType", "CLASSIC");
+    Assert.isTrue(
+        OPCCommandHardwareAddress.COMMAND_TYPE.class ==
+            handler.getField(opcAddress.getClass(), "commandType").getType()
+    );
     handler.setSimpleField(opcAddress, "commandType", "METHOD");
+    Assert.isTrue(
+        OPCCommandHardwareAddress.COMMAND_TYPE.class ==
+            handler.getField(opcAddress.getClass(), "commandType").getType()
+    );
   }
 }
