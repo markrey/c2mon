@@ -21,7 +21,8 @@ import org.junit.Test;
 
 import cern.c2mon.shared.common.datatag.address.impl.OPCHardwareAddressImpl;
 import cern.c2mon.shared.common.datatag.address.impl.PLCHardwareAddressImpl;
-import org.springframework.util.Assert;
+
+import static org.junit.Assert.assertEquals;
 
 public class SimpleTypeReflectionHandlerTest {
 
@@ -39,14 +40,8 @@ public class SimpleTypeReflectionHandlerTest {
     OPCHardwareAddressImpl opcAddress = new OPCHardwareAddressImpl("TEST");
     //conversion from String -> enum
     handler.setSimpleField(opcAddress, "commandType", "CLASSIC");
-    Assert.isTrue(
-        OPCCommandHardwareAddress.COMMAND_TYPE.class ==
-            handler.getField(opcAddress.getClass(), "commandType").getType()
-    );
+    assertEquals(OPCCommandHardwareAddress.COMMAND_TYPE.class, handler.getField(opcAddress.getClass(), "commandType").getType());
     handler.setSimpleField(opcAddress, "commandType", "METHOD");
-    Assert.isTrue(
-        OPCCommandHardwareAddress.COMMAND_TYPE.class ==
-            handler.getField(opcAddress.getClass(), "commandType").getType()
-    );
+    assertEquals(OPCCommandHardwareAddress.COMMAND_TYPE.class, handler.getField(opcAddress.getClass(), "commandType").getType());
   }
 }
