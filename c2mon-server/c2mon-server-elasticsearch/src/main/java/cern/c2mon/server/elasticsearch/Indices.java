@@ -7,10 +7,10 @@ import cern.c2mon.server.elasticsearch.supervision.SupervisionEventDocument;
 import cern.c2mon.server.elasticsearch.tag.TagDocument;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocument;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.ResourceAlreadyExistsException;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -69,7 +69,7 @@ public class Indices {
     }
 
     CreateIndexRequestBuilder builder = self.client.getClient().admin().indices().prepareCreate(indexName);
-    builder.setSettings(Settings.settingsBuilder()
+    builder.setSettings(Settings.builder()
         .put("number_of_shards", self.properties.getShardsPerIndex())
         .put("number_of_replicas", self.properties.getReplicasPerShard())
         .build());
@@ -84,7 +84,7 @@ public class Indices {
     try {
       CreateIndexResponse response = builder.get();
       created = response.isAcknowledged();
-    } catch (IndexAlreadyExistsException ex) {
+    } catch (ResourceAlreadyExistsException ex) {
       created = true;
     }
 
