@@ -24,6 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import cern.c2mon.server.elasticsearch.client.ElasticsearchClient;
 import cern.c2mon.server.elasticsearch.config.BaseElasticsearchIntegrationTest;
 
+import java.io.IOException;
+
 /**
  * @author Alban Marguet
  */
@@ -39,7 +41,7 @@ public class ElasticsearchModuleIntegrationTest extends BaseElasticsearchIntegra
   }
 
   @Test
-  public void testModuleStartup() {
+  public void testModuleStartup() throws IOException {
     String[] indices = client.getClient().admin().indices().prepareGetIndex().get().indices();
     log.info("indices in the cluster: ");
     for (String index : indices) {
