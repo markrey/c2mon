@@ -13,6 +13,7 @@ import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentIndexer;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentListener;
 import cern.c2mon.shared.client.configuration.ConfigConstants;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
+import org.elasticsearch.node.NodeValidationException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +21,7 @@ import org.powermock.reflect.Whitebox;
 import org.springframework.util.FileSystemUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -36,7 +38,7 @@ public class ElasticsearchServiceTest {
   private C2monClientProperties properties = new C2monClientProperties();
 
   @Before
-  public void setupElasticsearch() throws InterruptedException {
+  public void setupElasticsearch() throws InterruptedException, NodeValidationException {
     ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
     FileSystemUtils.deleteRecursively(new File(elasticsearchProperties.getEmbeddedStoragePath()));
     Whitebox.setInternalState(client, "properties", elasticsearchProperties);
@@ -57,7 +59,7 @@ public class ElasticsearchServiceTest {
   }
 
   @After
-  public void closeElasticsearch() {
+  public void closeElasticsearch() throws IOException {
     client.close(client.getClient());
     client.closeEmbeddedNode();
   }
