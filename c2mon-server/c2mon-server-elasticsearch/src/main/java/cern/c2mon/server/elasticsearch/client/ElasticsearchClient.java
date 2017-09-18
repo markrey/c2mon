@@ -41,6 +41,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Wrapper around {@link Client}. Connects asynchronously, but also provides
@@ -62,17 +63,19 @@ public class ElasticsearchClient {
   @Getter
   private boolean isClusterYellow;
 
-  private Node embeddedNode = null;
+  private static Node embeddedNode = null;
 
   @PostConstruct
   public void init() throws NodeValidationException {
-    client = createClient();
+    if (client == null) {
+      client = createClient();
 
-    if (properties.isEmbedded()) {
-      startEmbeddedNode();
+      if (properties.isEmbedded()) {
+        startEmbeddedNode();
+      }
+
+      connectAsynchronously();
     }
-
-    connectAsynchronously();
   }
 
   /**
@@ -87,8 +90,6 @@ public class ElasticsearchClient {
         .put("cluster.name", properties.getClusterName())
         .put("http.enabled", properties.isHttpEnabled());
 
-    log.debug("Creating client {} at {}:{} in cluster {}",
-        properties.getNodeName(), properties.getHost(), properties.getPort(), properties.getClusterName());
     TransportClient client = new PreBuiltTransportClient(settingsBuilder.build());
     try {
       client.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(properties.getHost()), properties.getPort()));
@@ -149,7 +150,11 @@ public class ElasticsearchClient {
   //@TODO "using Node directly within an application is not officially supported"
   //https://www.elastic.co/guide/en/elasticsearch/reference/5.5/breaking_50_java_api_changes.html
   //@TODO Embedded ES is no longer supported
-  private void startEmbeddedNode() throws NodeValidationException {
+  public void startEmbeddedNode() throws NodeValidationException {
+    if (this.embeddedNode != null) {
+      log.info("Embedded Elasticsearch cluster already running");
+      return;
+    }
     log.info("Launching an embedded Elasticsearch cluster: {}", properties.getClusterName());
 
     Collection plugins = Arrays.asList(Netty4Plugin.class);
@@ -167,7 +172,7 @@ public class ElasticsearchClient {
      .put("http.cors.allow-origin", "/.*/")
      .build(), plugins);
 
-    embeddedNode.start();
+      embeddedNode.start();
   }
 
   //solution from here: https://github.com/elastic/elasticsearch-hadoop/blob/fefcf8b191d287aca93a04144c67b803c6c81db5/mr/src/itest/java/org/elasticsearch/hadoop/EsEmbeddedServer.java
@@ -177,16 +182,19 @@ public class ElasticsearchClient {
     }
   }
 
-  public void close(Client client) {
+  public void close() {
     if (client != null) {
       client.close();
       log.info("Closed client {}", client.settings().get("node.name"));
+      client = null;
+      this.isClusterYellow = false;
     }
   }
 
   public void closeEmbeddedNode() throws IOException {
     if(embeddedNode != null) {
       embeddedNode.close();
+      this.close();
     }
   }
 }

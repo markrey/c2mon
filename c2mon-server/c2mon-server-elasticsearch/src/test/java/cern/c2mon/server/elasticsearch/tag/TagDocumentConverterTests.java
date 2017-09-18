@@ -19,6 +19,7 @@ package cern.c2mon.server.elasticsearch.tag;
 import java.util.Map;
 import java.util.Optional;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -48,11 +49,9 @@ public class TagDocumentConverterTests extends BaseTagDocumentConverterTest{
   @InjectMocks
   private TagDocumentConverter converter;
 
-  @Test
-  public void toAndFromJson() {
-    DataTag tag = EntityUtils.createDataTag();
-
-    ProcessCacheObject process = new ProcessCacheObject(1L);
+  @Before
+  public void setup() {
+     ProcessCacheObject process = new ProcessCacheObject(1L);
     process.setName("P_TEST");
 
     EquipmentCacheObject equipment = new EquipmentCacheObject(1L);
@@ -60,6 +59,12 @@ public class TagDocumentConverterTests extends BaseTagDocumentConverterTest{
 
     when(processCache.get(any())).thenReturn(process);
     when(equipmentCache.get(any())).thenReturn(equipment);
+  }
+
+  @Test
+  public void toAndFromJson() {
+    DataTag tag = EntityUtils.createDataTag();
+
     TagDocument document = converter.convert(tag).orElseThrow(() -> new IllegalArgumentException("TagDocument conversion failed"));
 
     // Serialize

@@ -13,6 +13,7 @@ import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentIndexer;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentListener;
 import cern.c2mon.shared.client.configuration.ConfigConstants;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
+import org.elasticsearch.node.NodeValidationException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,11 +37,12 @@ public class ElasticsearchServiceTest {
   private C2monClientProperties properties = new C2monClientProperties();
 
   @Before
-  public void setupElasticsearch() throws InterruptedException {
+  public void setupElasticsearch() throws InterruptedException, NodeValidationException {
     ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
     FileSystemUtils.deleteRecursively(new File(elasticsearchProperties.getEmbeddedStoragePath()));
     Whitebox.setInternalState(client, "properties", elasticsearchProperties);
     client.init();
+    client.waitForYellowStatus();
     TagConfigDocumentIndexer indexer = new TagConfigDocumentIndexer(client, elasticsearchProperties);
     ProcessCache processCache = createNiceMock(ProcessCache.class);
     EquipmentCache equipmentCache = createNiceMock(EquipmentCache.class);
@@ -48,18 +50,12 @@ public class ElasticsearchServiceTest {
     Indices indices = new Indices(elasticsearchProperties, client);
     TagConfigDocumentConverter converter = new TagConfigDocumentConverter(processCache, equipmentCache, subequipmentCache);
     tagDocumentListener = new TagConfigDocumentListener(indexer, converter);
-    try {
+/*    try {
       CompletableFuture<Void> nodeReady = CompletableFuture.runAsync(() -> client.waitForYellowStatus());
       nodeReady.get(120, TimeUnit.SECONDS);
     } catch (ExecutionException | TimeoutException e) {
       throw new RuntimeException("Timeout when waiting for embedded elasticsearch node to start!");
-    }
-  }
-
-  @After
-  public void closeElasticsearch() {
-    client.close(client.getClient());
-    client.closeEmbeddedNode();
+    }*/
   }
 
   @Test

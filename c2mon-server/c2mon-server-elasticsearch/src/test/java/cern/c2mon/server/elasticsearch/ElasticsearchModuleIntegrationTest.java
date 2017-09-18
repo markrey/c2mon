@@ -16,13 +16,15 @@
  *****************************************************************************/
 package cern.c2mon.server.elasticsearch;
 
+import cern.c2mon.server.elasticsearch.client.ElasticsearchClient;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.node.NodeValidationException;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import cern.c2mon.server.elasticsearch.client.ElasticsearchClient;
 import cern.c2mon.server.elasticsearch.config.BaseElasticsearchIntegrationTest;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 
@@ -36,7 +38,7 @@ public class ElasticsearchModuleIntegrationTest extends BaseElasticsearchIntegra
   private ElasticsearchClient client;
 
   @Before
-  public void setup() {
+  public void setup() throws NodeValidationException {
     client.waitForYellowStatus();
   }
 
@@ -47,6 +49,5 @@ public class ElasticsearchModuleIntegrationTest extends BaseElasticsearchIntegra
     for (String index : indices) {
       log.info(index);
     }
-    client.closeEmbeddedNode();
   }
 }

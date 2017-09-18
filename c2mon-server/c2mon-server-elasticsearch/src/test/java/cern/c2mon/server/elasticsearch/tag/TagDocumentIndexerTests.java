@@ -18,6 +18,8 @@ package cern.c2mon.server.elasticsearch.tag;
 
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.node.NodeValidationException;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +59,11 @@ public class TagDocumentIndexerTests extends BaseElasticsearchIntegrationTest {
 
   @Autowired
   private ElasticsearchClient client;
+
+  @Before
+  public void init() throws NodeValidationException {
+    client.waitForYellowStatus();
+  }
 
   @Test
   public void indexTags() throws IDBPersistenceException, InterruptedException {

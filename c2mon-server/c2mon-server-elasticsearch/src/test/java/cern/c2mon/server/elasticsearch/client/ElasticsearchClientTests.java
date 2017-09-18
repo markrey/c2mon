@@ -18,11 +18,16 @@ package cern.c2mon.server.elasticsearch.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.node.NodeValidationException;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import cern.c2mon.server.elasticsearch.config.BaseElasticsearchIntegrationTest;
 import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
+
+import java.io.IOException;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
@@ -41,10 +46,13 @@ public class ElasticsearchClientTests extends BaseElasticsearchIntegrationTest {
   @Autowired
   private ElasticsearchProperties properties;
 
+  @Before
+  public void setup() throws NodeValidationException {
+    client.waitForYellowStatus();
+  }
+
   @Test
   public void init() {
-    client.waitForYellowStatus();
-
     assertTrue(client.isClusterYellow());
     assertNotNull(client.getClient());
 

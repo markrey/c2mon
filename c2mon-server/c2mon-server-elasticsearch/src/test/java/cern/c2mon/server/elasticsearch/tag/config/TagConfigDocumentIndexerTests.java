@@ -25,7 +25,10 @@ import cern.c2mon.server.elasticsearch.junit.CachePopulationRule;
 import cern.c2mon.server.elasticsearch.util.EntityUtils;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.node.NodeValidationException;
 import org.elasticsearch.search.SearchHit;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +56,11 @@ public class TagConfigDocumentIndexerTests extends BaseElasticsearchIntegrationT
 
   @Autowired
   private ElasticsearchClient client;
+
+  @Before
+  public void init() throws NodeValidationException {
+    client.waitForYellowStatus();
+  }
 
   @Test
   public void addDataTag() throws Exception {

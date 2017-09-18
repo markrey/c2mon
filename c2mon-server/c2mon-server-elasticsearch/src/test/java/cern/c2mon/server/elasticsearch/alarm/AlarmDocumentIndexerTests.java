@@ -16,10 +16,16 @@
  *****************************************************************************/
 package cern.c2mon.server.elasticsearch.alarm;
 
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.sql.Timestamp;
 
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.node.NodeValidationException;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -44,6 +50,11 @@ public class AlarmDocumentIndexerTests extends BaseElasticsearchIntegrationTest 
 
   @Autowired
   private ElasticsearchClient client;
+
+  @Before
+  public void init() throws NodeValidationException {
+    client.waitForYellowStatus();
+  }
 
   @Test
   public void indexAlarm() throws IDBPersistenceException {
