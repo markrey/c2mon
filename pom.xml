@@ -4,7 +4,7 @@
 
   <groupId>cern.c2mon</groupId>
   <artifactId>c2mon</artifactId>
-  <version>1.8.19-SNAPSHOT</version>
+  <version>1.8.25-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <modules>

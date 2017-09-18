@@ -28,6 +28,7 @@ import cern.c2mon.server.common.config.CommonModule;
 import cern.c2mon.server.common.control.ControlTagCacheObject;
 import cern.c2mon.server.common.datatag.DataTagCacheObject;
 import cern.c2mon.server.common.equipment.EquipmentCacheObject;
+import cern.c2mon.server.common.metadata.Metadata;
 import cern.c2mon.server.common.process.ProcessCacheObject;
 import cern.c2mon.server.common.rule.RuleTagCacheObject;
 import cern.c2mon.server.common.subequipment.SubEquipmentCacheObject;
@@ -36,12 +37,12 @@ import cern.c2mon.server.configuration.api.util.CacheObjectFactory;
 import cern.c2mon.server.configuration.api.util.TestConfigurationProvider;
 import cern.c2mon.server.configuration.config.ConfigurationModule;
 import cern.c2mon.server.configuration.config.ProcessCommunicationManagerMock;
+import cern.c2mon.server.configuration.helper.ObjectEqualityComparison;
 import cern.c2mon.server.configuration.junit.ConfigurationCachePopulationRule;
 import cern.c2mon.server.configuration.parser.util.*;
-import cern.c2mon.server.configuration.helper.ObjectEqualityComparison;
 import cern.c2mon.server.daq.config.DaqModule;
-import cern.c2mon.server.daq.update.JmsContainerManagerImpl;
 import cern.c2mon.server.daq.out.ProcessCommunicationManager;
+import cern.c2mon.server.daq.update.JmsContainerManagerImpl;
 import cern.c2mon.server.rule.config.RuleModule;
 import cern.c2mon.server.supervision.config.SupervisionModule;
 import cern.c2mon.shared.client.configuration.ConfigConstants;
@@ -58,15 +59,17 @@ import cern.c2mon.shared.common.NoSimpleValueParseException;
 import cern.c2mon.shared.common.datatag.DataTagAddress;
 import cern.c2mon.shared.common.datatag.DataTagQualityImpl;
 import cern.c2mon.shared.common.datatag.address.impl.SimpleHardwareAddressImpl;
-import cern.c2mon.server.common.metadata.Metadata;
 import cern.c2mon.shared.daq.config.Change;
 import cern.c2mon.shared.daq.config.ChangeReport;
 import cern.c2mon.shared.daq.config.ConfigurationChangeEventReport;
-
 import junit.framework.Assert;
+import lombok.extern.slf4j.Slf4j;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -74,10 +77,11 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
 
 import static cern.c2mon.server.configuration.parser.util.ConfigurationProcessUtil.buildCreateAllFieldsProcess;
 import static org.easymock.EasyMock.*;
@@ -86,6 +90,7 @@ import static org.junit.Assert.*;
 /**
  * @author Franz Ritter
  */
+@Slf4j
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {
     CommonModule.class,
@@ -246,6 +251,59 @@ public class ConfigurationLoaderTest {
     assertFalse(aliveTimerCache.hasKey(300_001L));
 
     verify(communicationManager);
+  }
+
+  @Test
+  public void updateNonExistingEntity() throws IllegalAccessException, TransformerException, InstantiationException, NoSimpleValueParseException, ParserConfigurationException, NoSuchFieldException {
+    expect(communicationManager.sendConfiguration(eq(5L), isA(List.class))).andReturn(new ConfigurationChangeEventReport());
+    replay(communicationManager);
+    Configuration createProcess = TestConfigurationProvider.createProcess();
+    configurationLoader.applyConfiguration(createProcess);
+    Configuration newEquipmentConfig = TestConfigurationProvider.createEquipment();
+    configurationLoader.applyConfiguration(newEquipmentConfig);
+    processFacade.start(5L, "hostname", new Timestamp(System.currentTimeMillis()));
+
+    DataTag dataTag = DataTag.create("DataTag", Integer.class, new DataTagAddress())
+            .id(1000L)
+            .description("foo")
+            .mode(TagMode.OPERATIONAL)
+            .isLogged(false)
+            .minValue(0)
+            .maxValue(10)
+            .unit("testUnit")
+            .addMetadata("testMetadata1", 11)
+            .addMetadata("testMetadata2", 22)
+            .addMetadata("testMetadata3", 33)
+            .build();
+    dataTag.setEquipmentId(15L);
+
+    Configuration configuration = new Configuration();
+    configuration.addEntity(dataTag);
+    //apply the configuration to the server
+    configurationLoader.applyConfiguration(configuration);
+
+    //now add some tags
+    DataTag updatedDataTag = DataTag.update(1000L)
+        .removeMetadata("testMetadata2")
+        .removeMetadata("testMetadata3")
+        .build();
+    configuration = new Configuration();
+    configuration.addEntity(updatedDataTag);
+
+    //1010L does not exist
+    DataTag updatedDataTag2 = DataTag.update(1010L).build();
+    configuration.addEntity(updatedDataTag2);
+    //apply the configuration to the server
+    //should not throw an exception for 1010L
+    ConfigurationReport report = configurationLoader.applyConfiguration(configuration);
+    assertEquals(2, report.getElementReports().size());
+    assertEquals(1010L, (long)report.getElementReports().get(0).getId());
+    assertEquals(1000L, (long)report.getElementReports().get(1).getId());
+    //the overall report status is WARNING
+    assertEquals(ConfigConstants.Status.WARNING, report.getStatus());
+    //and the element report status for 1010L is WARNING
+    assertEquals(ConfigConstants.Status.WARNING, report.getElementReports().get(0).getStatus());
+    assertEquals(ConfigConstants.Status.OK, report.getElementReports().get(1).getStatus());
   }
 
   @Test
