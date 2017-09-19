@@ -13,6 +13,7 @@ import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentConverter;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentIndexer;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentListener;
 import cern.c2mon.shared.client.configuration.ConfigConstants;
+import org.apache.http.annotation.NotThreadSafe;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.node.NodeValidationException;
@@ -29,6 +30,7 @@ import java.util.concurrent.TimeoutException;
 import static org.easymock.EasyMock.createNiceMock;
 import static org.junit.Assert.assertEquals;
 
+@NotThreadSafe
 public class ElasticsearchServiceTest {
 
   private ElasticsearchClient client;
