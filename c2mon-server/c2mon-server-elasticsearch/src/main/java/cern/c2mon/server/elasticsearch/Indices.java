@@ -6,12 +6,16 @@ import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
 import cern.c2mon.server.elasticsearch.supervision.SupervisionEventDocument;
 import cern.c2mon.server.elasticsearch.tag.TagDocument;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocument;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.ResourceAlreadyExistsException;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.common.settings.Settings;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
@@ -28,19 +32,27 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Component
 public class Indices {
 
+  @Autowired
+  @Getter
   private ElasticsearchClient client;
 
+  @Autowired
+  @Getter
   private ElasticsearchProperties properties;
 
   private final List<String> indexCache = new CopyOnWriteArrayList<>();
 
   private static Indices self;
 
-  @Autowired
-  public Indices(ElasticsearchProperties properties, ElasticsearchClient client) {
-    this.properties = properties;
-    this.client = client;
+  private Indices() {
     self = this;
+  }
+
+  public static Indices getInstance() {
+    if (self == null) {
+      self = new Indices();
+    }
+    return self;
   }
 
   /**
@@ -68,10 +80,10 @@ public class Indices {
       return true;
     }
 
-    CreateIndexRequestBuilder builder = self.client.getClient().admin().indices().prepareCreate(indexName);
+    CreateIndexRequestBuilder builder = getInstance().client.getClient().admin().indices().prepareCreate(indexName);
     builder.setSettings(Settings.builder()
-        .put("number_of_shards", self.properties.getShardsPerIndex())
-        .put("number_of_replicas", self.properties.getReplicasPerShard())
+        .put("number_of_shards", getInstance().properties.getShardsPerIndex())
+        .put("number_of_replicas", getInstance().properties.getReplicasPerShard())
         .build());
 
     if (mapping != null) {
@@ -89,7 +101,7 @@ public class Indices {
     }
 
     if (created) {
-      self.indexCache.add(indexName);
+      getInstance().indexCache.add(indexName);
     }
 
     return created;
@@ -106,12 +118,12 @@ public class Indices {
    * @return true if the index exists, false otherwise
    */
   public static boolean exists(String indexName) {
-    if (self.indexCache.contains(indexName)) {
+    if (getInstance().indexCache.contains(indexName)) {
       return true;
     }
 
-    if (self.client.getClient().admin().indices().prepareExists(indexName).get().isExists()) {
-      self.indexCache.add(indexName);
+    if (getInstance().client.getClient().admin().indices().prepareExists(indexName).get().isExists()) {
+      getInstance().indexCache.add(indexName);
       return true;
     }
 
@@ -127,7 +139,7 @@ public class Indices {
    * @return the generated index name
    */
   public static String indexFor(TagDocument tag) {
-    String prefix = self.properties.getIndexPrefix() + "-tag_";
+    String prefix = getInstance().properties.getIndexPrefix() + "-tag_";
     return getIndexName(prefix, (Long) tag.get("timestamp"));
   }
 
@@ -139,7 +151,7 @@ public class Indices {
    * @return the generated index name
    */
   public static String indexFor(TagConfigDocument tag) {
-    return self.properties.getTagConfigIndex();
+    return getInstance().properties.getTagConfigIndex();
   }
 
   /**
@@ -151,7 +163,7 @@ public class Indices {
    * @return the generated index name
    */
   public static String indexFor(AlarmDocument alarm) {
-    String prefix = self.properties.getIndexPrefix() + "-alarm_";
+    String prefix = getInstance().properties.getIndexPrefix() + "-alarm_";
     return getIndexName(prefix, (Long) alarm.get("timestamp"));
   }
 
@@ -164,7 +176,7 @@ public class Indices {
    * @return the generated index name
    */
   public static String indexFor(SupervisionEventDocument supervisionEvent) {
-    String prefix = self.properties.getIndexPrefix() + "-supervision_";
+    String prefix = getInstance().properties.getIndexPrefix() + "-supervision_";
     return getIndexName(prefix, (Long) supervisionEvent.get("timestamp"));
   }
 
@@ -178,7 +190,7 @@ public class Indices {
    * @return the generated index name
    */
   private static String getIndexName(String prefix, long timestamp) {
-    String indexType = self.properties.getIndexType();
+    String indexType = getInstance().properties.getIndexType();
     String dateFormat;
 
     switch (indexType.toLowerCase()) {
@@ -198,6 +210,6 @@ public class Indices {
   }
 
   static ElasticsearchProperties getProperties() {
-    return self.properties;
+    return getInstance().properties;
   }
 }

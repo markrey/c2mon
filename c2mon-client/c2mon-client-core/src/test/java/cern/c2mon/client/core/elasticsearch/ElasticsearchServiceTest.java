@@ -6,21 +6,20 @@ import cern.c2mon.server.cache.ProcessCache;
 import cern.c2mon.server.cache.SubEquipmentCache;
 import cern.c2mon.server.common.datatag.DataTagCacheObject;
 import cern.c2mon.server.elasticsearch.Indices;
+import cern.c2mon.server.elasticsearch.MappingFactory;
 import cern.c2mon.server.elasticsearch.client.ElasticsearchClient;
 import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentConverter;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentIndexer;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentListener;
 import cern.c2mon.shared.client.configuration.ConfigConstants;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.node.NodeValidationException;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.powermock.reflect.Whitebox;
-import org.springframework.util.FileSystemUtils;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -32,30 +31,40 @@ import static org.junit.Assert.assertEquals;
 
 public class ElasticsearchServiceTest {
 
-  private ElasticsearchClient client = new ElasticsearchClient();
+  private ElasticsearchClient client;
   private TagConfigDocumentListener tagDocumentListener;
   private C2monClientProperties properties = new C2monClientProperties();
+  private ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
 
-  @Before
-  public void setupElasticsearch() throws InterruptedException, NodeValidationException {
-    ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
-    FileSystemUtils.deleteRecursively(new File(elasticsearchProperties.getEmbeddedStoragePath()));
-    Whitebox.setInternalState(client, "properties", elasticsearchProperties);
-    client.init();
-    client.waitForYellowStatus();
-    TagConfigDocumentIndexer indexer = new TagConfigDocumentIndexer(client, elasticsearchProperties);
+  public ElasticsearchServiceTest() throws NodeValidationException {
+    this.client = new ElasticsearchClient(this.elasticsearchProperties);
+    Whitebox.setInternalState(Indices.getInstance(), "client", this.client);
+    Whitebox.setInternalState(Indices.getInstance(), "properties", this.elasticsearchProperties);
+    TagConfigDocumentIndexer indexer = new TagConfigDocumentIndexer(client, this.elasticsearchProperties);
     ProcessCache processCache = createNiceMock(ProcessCache.class);
     EquipmentCache equipmentCache = createNiceMock(EquipmentCache.class);
     SubEquipmentCache subequipmentCache = createNiceMock(SubEquipmentCache.class);
-    Indices indices = new Indices(elasticsearchProperties, client);
     TagConfigDocumentConverter converter = new TagConfigDocumentConverter(processCache, equipmentCache, subequipmentCache);
     tagDocumentListener = new TagConfigDocumentListener(indexer, converter);
-/*    try {
-      CompletableFuture<Void> nodeReady = CompletableFuture.runAsync(() -> client.waitForYellowStatus());
+  }
+
+  @Before
+  public void setupElasticsearch() throws InterruptedException, NodeValidationException {
+    try {
+      CompletableFuture<Void> nodeReady = CompletableFuture.runAsync(() -> {
+        client.waitForYellowStatus();
+        client.getClient().admin().indices().delete(new DeleteIndexRequest(this.elasticsearchProperties.getTagConfigIndex()));
+        Indices.getInstance().create(this.elasticsearchProperties.getTagConfigIndex(), "tag_config", MappingFactory.createTagConfigMapping());
+        try {
+          Thread.sleep(500); //it takes some time for the index to be recreated
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      });
       nodeReady.get(120, TimeUnit.SECONDS);
     } catch (ExecutionException | TimeoutException e) {
       throw new RuntimeException("Timeout when waiting for embedded elasticsearch node to start!");
-    }*/
+    }
   }
 
   @Test

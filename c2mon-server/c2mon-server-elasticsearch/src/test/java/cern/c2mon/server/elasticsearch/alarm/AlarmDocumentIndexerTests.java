@@ -16,25 +16,17 @@
  *****************************************************************************/
 package cern.c2mon.server.elasticsearch.alarm;
 
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.sql.Timestamp;
-
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.node.NodeValidationException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import cern.c2mon.pmanager.persistence.exception.IDBPersistenceException;
 import cern.c2mon.server.common.alarm.AlarmCacheObject;
 import cern.c2mon.server.elasticsearch.Indices;
-import cern.c2mon.server.elasticsearch.client.ElasticsearchClient;
 import cern.c2mon.server.elasticsearch.config.BaseElasticsearchIntegrationTest;
 import cern.c2mon.server.elasticsearch.util.EntityUtils;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
+import org.elasticsearch.action.search.SearchResponse;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.sql.Timestamp;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
@@ -47,14 +39,6 @@ public class AlarmDocumentIndexerTests extends BaseElasticsearchIntegrationTest 
 
   @Autowired
   private AlarmDocumentIndexer indexer;
-
-  @Autowired
-  private ElasticsearchClient client;
-
-  @Before
-  public void init() throws NodeValidationException {
-    client.waitForYellowStatus();
-  }
 
   @Test
   public void indexAlarm() throws IDBPersistenceException {

@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (C) 2010-2016 CERN. All rights not expressly granted are reserved.
+ * Copyright (C) 2010-2017 CERN. All rights not expressly granted are reserved.
  *
  * This file is part of the CERN Control and Monitoring Platform 'C2MON'.
  * C2MON is free software: you can redistribute it and/or modify it under the
@@ -35,13 +35,11 @@ import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Wrapper around {@link Client}. Connects asynchronously, but also provides
@@ -49,12 +47,13 @@ import java.util.Collections;
  *
  * @author Alban Marguet
  * @author Justin Lewis Salmon
+ * @author James Hamilton
  */
 @Slf4j
 @Service
 public class ElasticsearchClient {
 
-  @Autowired
+  @Getter
   private ElasticsearchProperties properties;
 
   @Getter
@@ -63,9 +62,23 @@ public class ElasticsearchClient {
   @Getter
   private boolean isClusterYellow;
 
+  //static because we should only ever start 1 embedded node
   private static Node embeddedNode = null;
 
-  @PostConstruct
+  @Autowired
+  public ElasticsearchClient(ElasticsearchProperties properties) throws NodeValidationException {
+    this.properties = properties;
+    if (client == null) {
+      client = createClient();
+
+      if (properties.isEmbedded()) {
+        startEmbeddedNode();
+      }
+
+      connectAsynchronously();
+    }
+  }
+
   public void init() throws NodeValidationException {
     if (client == null) {
       client = createClient();
