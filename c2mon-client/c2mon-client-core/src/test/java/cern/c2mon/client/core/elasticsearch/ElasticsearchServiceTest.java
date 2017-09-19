@@ -56,7 +56,7 @@ public class ElasticsearchServiceTest {
         client.getClient().admin().indices().delete(new DeleteIndexRequest(this.elasticsearchProperties.getTagConfigIndex()));
         Indices.getInstance().create(this.elasticsearchProperties.getTagConfigIndex(), "tag_config", MappingFactory.createTagConfigMapping());
         try {
-          Thread.sleep(500); //it takes some time for the index to be recreated
+          Thread.sleep(1000); //it takes some time for the index to be recreated
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
