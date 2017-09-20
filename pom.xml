@@ -388,7 +388,7 @@
           <version>2.8.1</version>
           <configuration>
             <forkMode>never</forkMode>
-            <forkCount>1</forkCount>
+            <forkCount>0</forkCount>
           </configuration>
         </plugin>
         <plugin>
