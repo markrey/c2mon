@@ -18,6 +18,8 @@ import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.node.NodeValidationException;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.ParentRunner;
 import org.powermock.reflect.Whitebox;
 
 import java.util.Collection;
