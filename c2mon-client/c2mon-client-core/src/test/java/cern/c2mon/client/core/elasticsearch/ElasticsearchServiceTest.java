@@ -4,31 +4,25 @@ import cern.c2mon.client.core.config.C2monClientProperties;
 import cern.c2mon.server.cache.EquipmentCache;
 import cern.c2mon.server.cache.ProcessCache;
 import cern.c2mon.server.cache.SubEquipmentCache;
-import cern.c2mon.server.cache.config.CacheModule;
-import cern.c2mon.server.cache.dbaccess.config.CacheDbAccessModule;
-import cern.c2mon.server.cache.loading.config.CacheLoadingModule;
-import cern.c2mon.server.common.config.CommonModule;
 import cern.c2mon.server.common.datatag.DataTagCacheObject;
 import cern.c2mon.server.elasticsearch.Indices;
 import cern.c2mon.server.elasticsearch.MappingFactory;
 import cern.c2mon.server.elasticsearch.client.ElasticsearchClient;
-import cern.c2mon.server.elasticsearch.config.ElasticsearchModule;
 import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentConverter;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentIndexer;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentListener;
-import cern.c2mon.server.supervision.config.SupervisionModule;
 import cern.c2mon.shared.client.configuration.ConfigConstants;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.http.annotation.NotThreadSafe;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.node.NodeValidationException;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.powermock.reflect.Whitebox;
+import org.springframework.util.FileSystemUtils;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -39,43 +33,44 @@ import java.util.concurrent.TimeoutException;
 import static org.easymock.EasyMock.createNiceMock;
 import static org.junit.Assert.assertEquals;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {
-    CommonModule.class,
-    CacheModule.class,
-    CacheDbAccessModule.class,
-    CacheLoadingModule.class,
-    SupervisionModule.class,
-    ElasticsearchModule.class
-})
-@net.jcip.annotations.NotThreadSafe
-@Slf4j
+@NotThreadSafe
 public class ElasticsearchServiceTest {
 
-  @Autowired
   private ElasticsearchClient client;
   private TagConfigDocumentListener tagDocumentListener;
   private C2monClientProperties properties = new C2monClientProperties();
+  private static ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
+
+  public ElasticsearchServiceTest() throws NodeValidationException {
+    this.client = new ElasticsearchClient(this.elasticsearchProperties);
+    Whitebox.setInternalState(Indices.getInstance(), "client", this.client);
+    Whitebox.setInternalState(Indices.getInstance(), "properties", this.elasticsearchProperties);
+    TagConfigDocumentIndexer indexer = new TagConfigDocumentIndexer(client, this.elasticsearchProperties);
+    ProcessCache processCache = createNiceMock(ProcessCache.class);
+    EquipmentCache equipmentCache = createNiceMock(EquipmentCache.class);
+    SubEquipmentCache subequipmentCache = createNiceMock(SubEquipmentCache.class);
+    TagConfigDocumentConverter converter = new TagConfigDocumentConverter(processCache, equipmentCache, subequipmentCache);
+    tagDocumentListener = new TagConfigDocumentListener(indexer, converter);
+  }
+
+  @BeforeClass
+  @AfterClass
+  public static void cleanup() {
+    FileSystemUtils.deleteRecursively(new java.io.File(elasticsearchProperties.getEmbeddedStoragePath()));
+  }
 
   @Before
   public void setupElasticsearch() throws InterruptedException, NodeValidationException {
     try {
       CompletableFuture<Void> nodeReady = CompletableFuture.runAsync(() -> {
         client.waitForYellowStatus();
-        ElasticsearchProperties elasticsearchProperties = client.getProperties();
-        client.getClient().admin().indices().delete(new DeleteIndexRequest(elasticsearchProperties.getTagConfigIndex()));
-        Indices.getInstance().create(elasticsearchProperties.getTagConfigIndex(), "tag_config", MappingFactory.createTagConfigMapping());
+        client.getClient().admin().indices().delete(new DeleteIndexRequest(this.elasticsearchProperties.getTagConfigIndex()));
+        Indices.getInstance().create(this.elasticsearchProperties.getTagConfigIndex(), "tag_config", MappingFactory.createTagConfigMapping());
         try {
           Thread.sleep(1000); //it takes some time for the index to be recreated
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
-        TagConfigDocumentIndexer indexer = new TagConfigDocumentIndexer(client, elasticsearchProperties);
-        ProcessCache processCache = createNiceMock(ProcessCache.class);
-        EquipmentCache equipmentCache = createNiceMock(EquipmentCache.class);
-        SubEquipmentCache subequipmentCache = createNiceMock(SubEquipmentCache.class);
-        TagConfigDocumentConverter converter = new TagConfigDocumentConverter(processCache, equipmentCache, subequipmentCache);
-        tagDocumentListener = new TagConfigDocumentListener(indexer, converter);
       });
       nodeReady.get(120, TimeUnit.SECONDS);
     } catch (ExecutionException | TimeoutException e) {
@@ -104,7 +99,7 @@ public class ElasticsearchServiceTest {
       Thread.sleep(10000);
 
       ElasticsearchService service = new ElasticsearchService(properties);
-
+      System.out.println( service.getDistinctMetadataKeys());
       assertEquals("There should be 2 tags, one for responsible and one for 1234", 2, service.getDistinctMetadataKeys().size());
 
       Collection<Long> tagsForResponsibleUser = service.findByMetadata(responsible, testUser);
