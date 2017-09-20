@@ -394,6 +394,7 @@
           <configuration>
             <forkMode>never</forkMode>
             <forkCount>0</forkCount>
+            <reuseForks>false</reuseForks>
           </configuration>
         </plugin>
         <plugin>
