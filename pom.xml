@@ -396,6 +396,9 @@
             <forkCount>1</forkCount>
             <reuseForks>false</reuseForks>
             <perCoreThreadCount>false</perCoreThreadCount>
+            <systemPropertyVariables>
+              <forkNumber>fork_${surefire.forkNumber}</forkNumber>
+            </systemPropertyVariables>
           </configuration>
         </plugin>
         <plugin>

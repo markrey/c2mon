@@ -13,6 +13,7 @@ import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentConverter;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentIndexer;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocumentListener;
 import cern.c2mon.shared.client.configuration.ConfigConstants;
+import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.node.NodeValidationException;
@@ -32,6 +33,7 @@ import static org.easymock.EasyMock.createNiceMock;
 import static org.junit.Assert.assertEquals;
 
 @net.jcip.annotations.NotThreadSafe
+@Slf4j
 public class ElasticsearchServiceTest {
 
   private ElasticsearchClient client;
@@ -40,6 +42,8 @@ public class ElasticsearchServiceTest {
   private ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
 
   public ElasticsearchServiceTest() throws NodeValidationException {
+    String testdata = System.getProperty("forkNumber");
+    log.info(testdata);
     this.client = new ElasticsearchClient(this.elasticsearchProperties);
     Whitebox.setInternalState(Indices.getInstance(), "client", this.client);
     Whitebox.setInternalState(Indices.getInstance(), "properties", this.elasticsearchProperties);
