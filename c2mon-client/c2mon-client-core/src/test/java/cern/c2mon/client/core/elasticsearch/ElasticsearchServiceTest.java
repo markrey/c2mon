@@ -42,10 +42,10 @@ public class ElasticsearchServiceTest {
   private static ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
 
   public ElasticsearchServiceTest() throws NodeValidationException {
-    this.client = new ElasticsearchClient(this.elasticsearchProperties);
+    this.client = new ElasticsearchClient(elasticsearchProperties);
     Whitebox.setInternalState(Indices.getInstance(), "client", this.client);
-    Whitebox.setInternalState(Indices.getInstance(), "properties", this.elasticsearchProperties);
-    TagConfigDocumentIndexer indexer = new TagConfigDocumentIndexer(client, this.elasticsearchProperties);
+    Whitebox.setInternalState(Indices.getInstance(), "properties", elasticsearchProperties);
+    TagConfigDocumentIndexer indexer = new TagConfigDocumentIndexer(client, elasticsearchProperties);
     ProcessCache processCache = createNiceMock(ProcessCache.class);
     EquipmentCache equipmentCache = createNiceMock(EquipmentCache.class);
     SubEquipmentCache subequipmentCache = createNiceMock(SubEquipmentCache.class);
@@ -64,8 +64,8 @@ public class ElasticsearchServiceTest {
     try {
       CompletableFuture<Void> nodeReady = CompletableFuture.runAsync(() -> {
         client.waitForYellowStatus();
-        client.getClient().admin().indices().delete(new DeleteIndexRequest(this.elasticsearchProperties.getTagConfigIndex()));
-        Indices.getInstance().create(this.elasticsearchProperties.getTagConfigIndex(), "tag_config", MappingFactory.createTagConfigMapping());
+        client.getClient().admin().indices().delete(new DeleteIndexRequest(elasticsearchProperties.getTagConfigIndex()));
+        Indices.create(elasticsearchProperties.getTagConfigIndex(), "tag_config", MappingFactory.createTagConfigMapping());
         try {
           Thread.sleep(1000); //it takes some time for the index to be recreated
         } catch (InterruptedException e) {

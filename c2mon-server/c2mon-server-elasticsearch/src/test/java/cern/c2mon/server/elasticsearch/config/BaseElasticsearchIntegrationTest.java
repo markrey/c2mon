@@ -63,7 +63,7 @@ public abstract class BaseElasticsearchIntegrationTest {
         client.waitForYellowStatus();
         ElasticsearchProperties elasticsearchProperties = this.client.getProperties();
         client.getClient().admin().indices().delete(new DeleteIndexRequest(elasticsearchProperties.getTagConfigIndex()));
-        Indices.getInstance().create(elasticsearchProperties.getTagConfigIndex(), "tag_config", MappingFactory.createTagConfigMapping());
+        Indices.create(elasticsearchProperties.getTagConfigIndex(), "tag_config", MappingFactory.createTagConfigMapping());
         try {
           //it takes some time for the index to be recreated, should do this properly
           //by waiting for yellow status but it doesn't work?
