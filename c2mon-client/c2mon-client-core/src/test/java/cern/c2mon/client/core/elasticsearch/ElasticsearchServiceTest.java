@@ -18,6 +18,7 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.node.NodeValidationException;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.ParentRunner;
@@ -36,18 +37,19 @@ import static org.junit.Assert.assertEquals;
 @Slf4j
 public class ElasticsearchServiceTest {
 
-  private ElasticsearchClient client;
-  private TagConfigDocumentListener tagDocumentListener;
-  private C2monClientProperties properties = new C2monClientProperties();
-  private ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
+  private static ElasticsearchClient client;
+  private static TagConfigDocumentListener tagDocumentListener;
+  private static C2monClientProperties properties = new C2monClientProperties();
+  private static ElasticsearchProperties elasticsearchProperties = new ElasticsearchProperties();
 
-  public ElasticsearchServiceTest() throws NodeValidationException {
+  @BeforeClass
+  public static void init() throws NodeValidationException {
     String testdata = System.getProperty("forkNumber");
     log.info(testdata);
-    this.client = new ElasticsearchClient(this.elasticsearchProperties);
-    Whitebox.setInternalState(Indices.getInstance(), "client", this.client);
-    Whitebox.setInternalState(Indices.getInstance(), "properties", this.elasticsearchProperties);
-    TagConfigDocumentIndexer indexer = new TagConfigDocumentIndexer(client, this.elasticsearchProperties);
+    client = new ElasticsearchClient(elasticsearchProperties);
+    Whitebox.setInternalState(Indices.getInstance(), "client", client);
+    Whitebox.setInternalState(Indices.getInstance(), "properties", elasticsearchProperties);
+    TagConfigDocumentIndexer indexer = new TagConfigDocumentIndexer(client, elasticsearchProperties);
     ProcessCache processCache = createNiceMock(ProcessCache.class);
     EquipmentCache equipmentCache = createNiceMock(EquipmentCache.class);
     SubEquipmentCache subequipmentCache = createNiceMock(SubEquipmentCache.class);
