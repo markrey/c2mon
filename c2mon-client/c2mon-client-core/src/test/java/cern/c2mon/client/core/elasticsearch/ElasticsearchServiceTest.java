@@ -44,8 +44,6 @@ public class ElasticsearchServiceTest {
 
   @BeforeClass
   public static void init() throws NodeValidationException {
-    String testdata = System.getProperty("forkNumber");
-    log.info(testdata);
     client = new ElasticsearchClient(elasticsearchProperties);
     Whitebox.setInternalState(Indices.getInstance(), "client", client);
     Whitebox.setInternalState(Indices.getInstance(), "properties", elasticsearchProperties);
