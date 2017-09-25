@@ -7,18 +7,18 @@ import cern.c2mon.server.elasticsearch.supervision.SupervisionEventDocument;
 import cern.c2mon.server.elasticsearch.tag.TagDocument;
 import cern.c2mon.server.elasticsearch.tag.config.TagConfigDocument;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpStatus;
 import org.elasticsearch.ResourceAlreadyExistsException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequestBuilder;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.client.Response;
+import org.elasticsearch.client.RestClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
@@ -121,7 +121,21 @@ public class Indices {
       return true;
     }
 
-    return false;
+    final RestClient restClient = self.client.getLowLevelRestClient();
+    try {
+      final Response response = restClient.performRequest("HEAD", "/" + indexName);
+      return response.getStatusLine().getStatusCode() == HttpStatus.SC_OK;
+    } catch (IOException e) {
+      return false;
+    }
+
+/*    if (getInstance().client.getClient().admin().indices().prepareExists(indexName).get().isExists()) {
+
+      getInstance().indexCache.add(indexName);
+      return true;
+    }
+
+    return false; */
   }
 
   /**
