@@ -7,6 +7,7 @@ import cern.c2mon.server.elasticsearch.config.ElasticsearchProperties;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.node.NodeValidationException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;
@@ -45,7 +46,7 @@ public class MappingTest {
       throw new RuntimeException("Timeout when waiting for embedded elasticsearch!");
     }
   }
-  @Test
+
   public void test() {
     indices.create("test", "type", "{\n" +
         "  \"_routing\": {\n" +
