@@ -22,6 +22,8 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -46,17 +48,17 @@ public class TagDocumentIndexer implements IDBPersistenceHandler<TagDocument> {
   private final BulkProcessorProxy bulkProcessor;
 
   @Autowired
-  public TagDocumentIndexer(BulkProcessorProxy bulkProcessor) {
+  public TagDocumentIndexer(final BulkProcessorProxy bulkProcessor) {
     this.bulkProcessor = bulkProcessor;
   }
 
   @Override
-  public void storeData(TagDocument tag) throws IDBPersistenceException {
+  public void storeData(final TagDocument tag) throws IDBPersistenceException {
     storeData(Collections.singletonList(tag));
   }
 
   @Override
-  public void storeData(List<TagDocument> tags) throws IDBPersistenceException {
+  public void storeData(final List<TagDocument> tags) throws IDBPersistenceException {
     try {
       log.debug("Trying to send a batch of size {}", tags.size());
       tags.forEach(this::indexTag);
@@ -68,20 +70,20 @@ public class TagDocumentIndexer implements IDBPersistenceHandler<TagDocument> {
     }
   }
 
-  private void indexTag(TagDocument tag) {
+  private void indexTag(final TagDocument tag) {
     String index = getOrCreateIndex(tag);
     String type = Types.of(tag.getProperty("c2mon", Map.class).get("dataType").toString());
 
     log.trace("Indexing tag (#{}, index={}, type={})", tag.getId(), index, type);
 
     IndexRequest indexNewTag = new IndexRequest(index, type)
-        .source(tag.toString())
+        .source(tag.toString(), XContentType.JSON)
         .routing(tag.getId());
 
     bulkProcessor.add(indexNewTag);
   }
 
-  private String getOrCreateIndex(TagDocument tag) {
+  private String getOrCreateIndex(final TagDocument tag) {
     String index = Indices.indexFor(tag);
 
     if (!Indices.exists(index)) {
