@@ -323,13 +323,19 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
       clusterCache.acquireWriteLockOnKey(this.cachePersistenceLock);
       if (!isDBConfig && runInParallel(configElements)) {
         log.debug("Enter parallel configuration");
-        ForkJoinPool forkJoinPool = new ForkJoinPool(2);
+        ForkJoinPool forkJoinPool = new ForkJoinPool(10);
         try {
+          //https://blog.krecan.net/2014/03/18/how-to-specify-thread-pool-for-java-8-parallel-streams/
           forkJoinPool.submit(() ->
               configElements.parallelStream().forEach(element ->
-              applyConfigurationElement(element, processLists, elementPlaceholder, daqReportPlaceholder, report, configId, configProgressMonitor))
-          ).get(120, TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                  applyConfigurationElement(element, processLists, elementPlaceholder, daqReportPlaceholder, report, configId, configProgressMonitor))
+          ).get(300, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            String errorMessage = "Error applying configuration elements in parallel, timeout after 5 minutes";
+            log.error(errorMessage, e);
+            report.addStatus(Status.FAILURE);
+            report.setStatusDescription(report.getStatusDescription() + errorMessage + "\n");
+        } catch (InterruptedException | ExecutionException e) {
             String errorMessage = "Error applying configuration elements in parallel";
             log.error(errorMessage, e);
             report.addStatus(Status.FAILURE);
