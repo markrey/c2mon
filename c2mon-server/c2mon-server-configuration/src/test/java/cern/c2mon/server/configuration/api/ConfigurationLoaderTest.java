@@ -297,13 +297,13 @@ public class ConfigurationLoaderTest {
     //should not throw an exception for 1010L
     ConfigurationReport report = configurationLoader.applyConfiguration(configuration);
     assertEquals(2, report.getElementReports().size());
-    assertEquals(1010L, (long)report.getElementReports().get(1).getId());
-    assertEquals(1000L, (long)report.getElementReports().get(0).getId());
+    assertEquals(1010L, (long)report.getElementReports().get(0).getId());
+    assertEquals(1000L, (long)report.getElementReports().get(1).getId());
     //the overall report status is WARNING
     assertEquals(ConfigConstants.Status.WARNING, report.getStatus());
     //and the element report status for 1010L is WARNING
-    assertEquals(ConfigConstants.Status.WARNING, report.getElementReports().get(1).getStatus());
-    assertEquals(ConfigConstants.Status.OK, report.getElementReports().get(0).getStatus());
+    assertEquals(ConfigConstants.Status.WARNING, report.getElementReports().get(0).getStatus());
+    assertEquals(ConfigConstants.Status.OK, report.getElementReports().get(1).getStatus());
   }
 
   @Test

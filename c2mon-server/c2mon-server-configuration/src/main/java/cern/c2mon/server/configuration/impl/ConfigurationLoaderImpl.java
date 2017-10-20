@@ -23,6 +23,10 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import lombok.extern.slf4j.Slf4j;
 import org.simpleframework.xml.Serializer;
@@ -317,8 +321,25 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
     // Write lock needed to avoid parallel Batch persistence transactions
     try {
       clusterCache.acquireWriteLockOnKey(this.cachePersistenceLock);
+      if (!isDBConfig && runInParallel(configElements)) {
+        log.debug("Enter parallel configuration");
+        ForkJoinPool forkJoinPool = new ForkJoinPool(2);
+        try {
+          forkJoinPool.submit(() ->
+              configElements.parallelStream().forEach(element ->
+              applyConfigurationElement(element, processLists, elementPlaceholder, daqReportPlaceholder, report, configId, configProgressMonitor))
+          ).get(120, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            String errorMessage = "Error applying configuration elements in parallel";
+            log.error(errorMessage, e);
+            report.addStatus(Status.FAILURE);
+            report.setStatusDescription(report.getStatusDescription() + errorMessage + "\n");
+        }
+      } else {
+        log.debug("Enter serialized configuration");
         configElements.stream().forEach(element ->
             applyConfigurationElement(element, processLists, elementPlaceholder, daqReportPlaceholder, report, configId, configProgressMonitor));
+      }
     } finally {
       clusterCache.releaseWriteLockOnKey(this.cachePersistenceLock);
     }
@@ -410,6 +431,20 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
     report.normalize();
 
     return report;
+  }
+
+  /**
+   * Determine if the configuration can be applied in parallel.
+   *
+   * @param elements List of entities which needs to be configured.
+   * @return True if the configuration can be applied in parallel.
+   */
+  private boolean runInParallel(List<ConfigurationElement> elements) {
+    return !elements.stream().anyMatch(element ->
+        element.getEntity().equals(ConfigConstants.Entity.SUBEQUIPMENT) ||
+        element.getEntity().equals(ConfigConstants.Entity.EQUIPMENT) ||
+        element.getEntity().equals(ConfigConstants.Entity.PROCESS) ||
+        element.getAction().equals(Action.REMOVE));
   }
 
   /**
@@ -509,7 +544,6 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
    *
    * @param element the details of the configuration action
    * @param elementReport report that should be set to failed if there is a problem
-   * @param changeId first free id to use in the sequence of changeIds, used for sending to DAQs *is increased by method*
    * @return list of DAQ configuration events; is never null but may be empty
    * @throws IllegalAccessException
    **/
