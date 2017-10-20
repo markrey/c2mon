@@ -317,16 +317,8 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
     // Write lock needed to avoid parallel Batch persistence transactions
     try {
       clusterCache.acquireWriteLockOnKey(this.cachePersistenceLock);
-      if (!isDBConfig && runInParallel(configElements)) {
-        log.debug("Enter parallel configuration");
-        configElements.parallelStream().forEach(element ->
-            applyConfigurationElement(element, processLists, elementPlaceholder, daqReportPlaceholder, report, configId, configProgressMonitor));
-
-      } else {
-        log.debug("Enter serialized configuration");
         configElements.stream().forEach(element ->
             applyConfigurationElement(element, processLists, elementPlaceholder, daqReportPlaceholder, report, configId, configProgressMonitor));
-      }
     } finally {
       clusterCache.releaseWriteLockOnKey(this.cachePersistenceLock);
     }
@@ -418,20 +410,6 @@ public class ConfigurationLoaderImpl implements ConfigurationLoader {
     report.normalize();
 
     return report;
-  }
-
-  /**
-   * Determine if the configuration can be applied in parallel.
-   *
-   * @param elements List of entities which needs to be configured.
-   * @return True if the configuration can be applied in parallel.
-   */
-  private boolean runInParallel(List<ConfigurationElement> elements) {
-    return !elements.stream().anyMatch(element ->
-        element.getEntity().equals(ConfigConstants.Entity.SUBEQUIPMENT) ||
-        element.getEntity().equals(ConfigConstants.Entity.EQUIPMENT) ||
-        element.getEntity().equals(ConfigConstants.Entity.PROCESS) ||
-        element.getAction().equals(Action.REMOVE));
   }
 
   /**
