@@ -1,11 +1,10 @@
-
 CREATE TABLE timconfig (
  configid INTEGER  NOT NULL
 ,configname VARCHAR(35) NOT NULL
 ,configdesc VARCHAR(100)
 ,author  VARCHAR(35) DEFAULT 'TIMCONFIG' NOT NULL
 ,configstate VARCHAR(1) DEFAULT 'D' NOT NULL
-,createdate DATE DEFAULT SYSDATE NOT NULL
+,createdate DATE NOT NULL
 ,applydate DATE
 ,status  VARCHAR(3)
 );
