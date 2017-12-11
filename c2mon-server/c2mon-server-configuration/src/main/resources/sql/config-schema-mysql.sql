@@ -4,7 +4,7 @@ CREATE TABLE timconfig (
 ,configdesc VARCHAR(100)
 ,author  VARCHAR(35) DEFAULT 'TIMCONFIG' NOT NULL
 ,configstate VARCHAR(1) DEFAULT 'D' NOT NULL
-,createdate DATE NOT NULL
+,createdate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ,applydate DATE
 ,status  VARCHAR(3)
 );
