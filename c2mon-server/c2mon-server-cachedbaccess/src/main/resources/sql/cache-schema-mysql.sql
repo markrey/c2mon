@@ -18,28 +18,20 @@ BEGIN
     DECLARE cur_val bigint(20);
  
     SELECT
-        sequence_cur_value INTO cur_val
+        VAL INTO cur_val
     FROM
-        sequence.sequence_data
+        SEQUENCE
     WHERE
-        sequence_name = seq_name
+        NAME = seq_name
     ;
  
     IF cur_val IS NOT NULL THEN
         UPDATE
-            sequence.sequence_data
+            SEQUENCE
         SET
-            sequence_cur_value = IF (
-                (sequence_cur_value + sequence_increment) > sequence_max_value,
-                IF (
-                    sequence_cycle = TRUE,
-                    sequence_min_value,
-                    NULL
-                ),
-                sequence_cur_value + sequence_increment
-            )
+            VAL = VAL + 1
         WHERE
-            sequence_name = seq_name
+            NAME = seq_name
         ;
     END IF;
  
